@@ -1,7 +1,7 @@
 import java.net.*;
 import java.io.*;
  
-public class Client
+public class ClientTCP
 {
     // initialize socket and input output streams
     private Socket socket            = null;
@@ -9,7 +9,7 @@ public class Client
     private DataOutputStream out     = null;
  
     // constructor to put ip address and port
-    public Client(String address, int port)
+    public ClientTCP(String address, int port)
     {
         // establish a connection
         try
@@ -64,6 +64,6 @@ public class Client
  
     public static void main(String args[])
     {
-        Client client = new Client("127.0.0.1", 8000);
+        ClientTCP client = new ClientTCP("127.0.0.1", 8000);
     }
 }

@@ -53,9 +53,4 @@ public class ServerTCP
             System.out.println(i);
         }
     }
- 
-    public static void main(String args[])
-    {
-        ServerTCP server = new ServerTCP(8000);
-    }
 }

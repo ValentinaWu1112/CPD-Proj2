@@ -6,6 +6,7 @@ public class ClientTCP{
     private Socket socket            = null;
     private DataInputStream  input   = null;
     private DataOutputStream out     = null;
+    private DataInputStream input_server = null;
 
     // constructor to put ip address and port
     public ClientTCP(String address, int port){
@@ -19,6 +20,9 @@ public class ClientTCP{
 
             // sends output to the socket
             out    = new DataOutputStream(socket.getOutputStream());
+
+            //receive input Server
+            input_server = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
         }
         catch(UnknownHostException u){
             System.out.println(u);
@@ -29,6 +33,7 @@ public class ClientTCP{
 
         // string to read message from input
         String line = "";
+        String server = "";
 
         // keep reading until "Over" is input
         while (!line.equals("Over")){
@@ -36,6 +41,8 @@ public class ClientTCP{
             {
                 line = input.readLine();
                 out.writeUTF(line);
+                server = input_server.readUTF();
+                System.out.println(server);
             }
             catch(IOException i)
             {
@@ -52,9 +59,5 @@ public class ClientTCP{
         catch(IOException i){
             System.out.println(i);
         }
-    }
-
-    public static void main(String args[]){
-        ClientTCP client = new ClientTCP("127.0.0.1", 8000);
     }
 }

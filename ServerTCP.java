@@ -6,6 +6,7 @@ public class ServerTCP{
     private Socket          socket   = null;
     private ServerSocket    server   = null;
     private DataInputStream in       =  null;
+    private DataOutputStream out     = null;
 
     // constructor with port
     public ServerTCP(int port){
@@ -23,6 +24,8 @@ public class ServerTCP{
             in = new DataInputStream(
                 new BufferedInputStream(socket.getInputStream()));
 
+            out    = new DataOutputStream(socket.getOutputStream());
+
             String line = "";
 
             // reads message from client until "Over" is sent
@@ -30,6 +33,8 @@ public class ServerTCP{
                 try{
                     line = in.readUTF();
                     System.out.println(line);
+                    String receive = "receive";
+                    out.writeUTF(receive);
                 }
                 catch(IOException i){
                     System.out.println(i);
@@ -44,9 +49,5 @@ public class ServerTCP{
         catch(IOException i){
             System.out.println(i);
         }
-    }
-
-    public static void main(String args[]){
-        ServerTCP server = new ServerTCP(8000);
     }
 }

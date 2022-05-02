@@ -35,6 +35,10 @@
  * intended for use in the design, construction, operation or
  * maintenance of any nuclear facility.
  */
+<<<<<<< HEAD
+=======
+package example.hello;
+>>>>>>> efe6d5804cda8615855634dbc80467fa01d3a242
 
 import java.rmi.registry.Registry;
 import java.rmi.registry.LocateRegistry;
@@ -46,7 +50,11 @@ public class Server implements Hello {
     public Server() {}
 
     public String sayHello() {
+<<<<<<< HEAD
         return "asdas";
+=======
+        return "Hello, world!";
+>>>>>>> efe6d5804cda8615855634dbc80467fa01d3a242
     }
 
     public static void main(String args[]) {
@@ -57,7 +65,11 @@ public class Server implements Hello {
 
             // Bind the remote object's stub in the registry
             Registry registry = LocateRegistry.getRegistry();
+<<<<<<< HEAD
             registry.rebind("Hello", stub);
+=======
+            registry.bind("Hello", stub);
+>>>>>>> efe6d5804cda8615855634dbc80467fa01d3a242
 
             System.err.println("Server ready");
         } catch (Exception e) {

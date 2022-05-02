@@ -15,7 +15,11 @@ public class ClientTCP{
             socket = new Socket(address, port);
             System.out.println("Connected");
 
-            // takes input from terminal
+            // takes input from terminal. NO it doesnt omg fuckin poor ass documentation
+            // this line simply creates an object THAT ALLOWS you to explicitly
+            // read input from whatever stream, system.in in this case.. omg you people
+            // dont understand your own code man please..giving me a really hard time
+            // comprehending this basic fuckin functionality man
             input  = new DataInputStream(System.in);
 
             // sends output to the socket

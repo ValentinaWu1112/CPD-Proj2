@@ -100,7 +100,7 @@ class NodeMulticastClient extends Thread{
 
     public void setInGroup(int value){
         if(value != 0 && value != 1){
-            System.err.println("Invalid in_group value");
+            System.err.println("Invalid in_group value.");
             return;
         }
         in_group = value;
@@ -109,7 +109,7 @@ class NodeMulticastClient extends Thread{
 
     public void sendMulticastMessage(String message){
         if(in_group == 0){
-            System.err.println("Unable to send message, join the group before any messaging attempt");
+            System.err.println("Unable to send message, join the group before any messaging attempt.");
             return;
         }
         byte[] msg = message.getBytes();
@@ -225,11 +225,11 @@ class NodeTCPServer extends Thread{
                         System.out.println(i);
                     }
                 }
-                System.out.println("Closing connection");
 
                 // close connection
                 socket.close();
                 in.close();
+                System.out.println("Connection closed.");
             }
         }
         catch(IOException i){
@@ -246,7 +246,6 @@ class NodeTCPClient extends Thread{
     private String mess = "";
     private String rec = "";
     private Socket socket;
-    private boolean is_connected = false;
 
     public NodeTCPClient(String target, String port){
         this.ip_target = target;
@@ -279,9 +278,7 @@ class NodeTCPClient extends Thread{
 
     public void run(){
         try{
-            System.out.println("Preparing as a TCP client");
             socket = new Socket(this.ip_target, this.port_target);
-            is_connected = true;
             System.out.println("Connected");
 
             out = new DataOutputStream(socket.getOutputStream());

@@ -16,6 +16,10 @@ public class Node{
 class NodeBrain extends Thread{
     private String node_name;
     private int node_tcp_port;
+    private NodeTCPServer ntcps;
+    private NodeTCPClient ntcpc;
+    private NodeMulticastServer nms;
+    private NodeMulticastClient nmc;
 
     public NodeBrain(String name, String tcp_port){
         this.node_name = name;
@@ -24,21 +28,12 @@ class NodeBrain extends Thread{
 
     public void run(){
         Scanner scan = new Scanner(System.in);
-        NodeMulticastServer nms = new NodeMulticastServer();
+        nms = new NodeMulticastServer("224.0.0.1", 4000);
         nms.start();
-        NodeMulticastClient nmc = new NodeMulticastClient();
-        nmc.start();
-        //if(Integer.parseInt(args[0]) == 0){
-        NodeTCPServer ntcps = new NodeTCPServer(this.node_tcp_port);
+        ntcps = new NodeTCPServer(this.node_tcp_port);
         ntcps.start();
-        //}
-        //else{
-            //NodeTCPClient ntcpc = new NodeTCPClient();
-            //ntcpc.start();
-        //}
 
         String[] scanned = {""};
-        NodeTCPClient ntcpc = null;
         while(!scanned[0].equals("stop")){
             String raw_scanned = scan.nextLine();
             scanned = raw_scanned.split(" ");
@@ -53,20 +48,36 @@ class NodeBrain extends Thread{
                     list.remove(scanned[1]);
                     ntcpc.sendTCPMessage(String.join(" ", list));
                 }
-            }
-            else if(scanned[0].equals("multicast")){
-                if(scanned[1].equals("leave")){
-                    nms.leaveMulticastGroup();
-                    break;
+                else if(scanned[1].equals("close")){
+                    ntcpc.sendTCPMessage(scanned[1]);
+                    ntcpc.closeTCPConnection();
                 }
                 else{
+                    System.err.println("Unknown command.");
+                }
+            }
+            else if(scanned[0].equals("multicast")){
+                if(scanned[1].equals("join")){
+                    nms.joinMulticastGroup();
+                    nmc = new NodeMulticastClient("224.0.0.1", 4000);
+                    nmc.start();
+                }
+                else if(scanned[1].equals("leave")){
+                    nmc.setInGroup(0);
+                    nms.leaveMulticastGroup();
+                }
+                else if(scanned[1].equals("send")){
                     List<String> list = new ArrayList<String>(Arrays.asList(scanned));
                     list.remove(scanned[0]);
+                    list.remove(scanned[1]);
                     nmc.sendMulticastMessage(String.join(" ", list));
+                }
+                else{
+                    System.err.println("Unknown command.");
                 }
             }
             else{
-
+                System.err.println("Unknown command.");
             }
         }
     }
@@ -76,16 +87,35 @@ class NodeMulticastClient extends Thread{
     private Scanner scan = new Scanner(System.in); 
     private DataInputStream input;
     private DataOutputStream out;
-    private final int mcPort = 42069; 
-    private final String mcIPStr = "224.0.0.1";
-    private InetAddress mcIPAddress;
+    private String raw_multicast_address;
+    private int multicast_port;
+    private InetAddress multicast_address;
     private DatagramSocket udpSocket;
+    private volatile int in_group = 1;
+
+    public NodeMulticastClient(String address, int port){
+        this.raw_multicast_address = address;
+        this.multicast_port = port;
+    }
+
+    public void setInGroup(int value){
+        if(value != 0 && value != 1){
+            System.err.println("Invalid in_group value");
+            return;
+        }
+        in_group = value;
+        return;
+    }
 
     public void sendMulticastMessage(String message){
+        if(in_group == 0){
+            System.err.println("Unable to send message, join the group before any messaging attempt");
+            return;
+        }
         byte[] msg = message.getBytes();
         DatagramPacket packet = new DatagramPacket(msg, msg.length);
-        packet.setAddress(mcIPAddress);
-        packet.setPort(mcPort);
+        packet.setAddress(multicast_address);
+        packet.setPort(this.multicast_port);
         try{
             udpSocket.send(packet);
         } catch(IOException e){
@@ -97,7 +127,7 @@ class NodeMulticastClient extends Thread{
     public void run() {
         try{
             udpSocket = new DatagramSocket(); 
-            mcIPAddress = InetAddress.getByName(mcIPStr);
+            multicast_address = InetAddress.getByName(this.raw_multicast_address);
         } catch (Exception e){ 
             e.printStackTrace(); 
         }
@@ -105,19 +135,34 @@ class NodeMulticastClient extends Thread{
 }
 
 class NodeMulticastServer extends Thread{
-    private InetAddress mcIPAddress;
+    private InetAddress multicast_address;
     private SocketAddress soc_add;
     private MulticastSocket mcSocket;
     private DatagramPacket packet;
-    private final int mcPort = 42069;
-    private String received_message = "";
-    private int inGroup = 1;
+    private String raw_multicast_address;
+    private int multicast_port;
+    private String received_message;
+    private volatile int in_group = 0;
+
+    public NodeMulticastServer(String address, int port){
+        this.raw_multicast_address = address;
+        this.multicast_port = port;
+    }
+
+    public void joinMulticastGroup(){
+        try{
+            in_group = 1;
+            mcSocket.joinGroup(soc_add, NetworkInterface.getByIndex(0)); 
+        } catch(Exception e){
+            e.printStackTrace(); 
+        }
+        
+    }
 
     public void leaveMulticastGroup(){
         try{
-            inGroup = 0;
+            in_group = 0;
             mcSocket.leaveGroup(soc_add, NetworkInterface.getByIndex(0)); 
-            System.out.println("group was left, i should not be receiving any more messages");
         } catch(IOException e){
             System.out.println(e);
         }
@@ -126,22 +171,21 @@ class NodeMulticastServer extends Thread{
 
     public void run(){
         try{
-            System.out.println("Multicast Server On");
-            mcIPAddress = InetAddress.getByName("224.0.0.1");
-            soc_add = new InetSocketAddress(mcIPAddress, mcPort);
-            mcSocket = new MulticastSocket(mcPort);
-            // Join the group 
-            mcSocket.joinGroup(soc_add, NetworkInterface.getByIndex(0)); 
+            System.out.println("Multicast Server On at " + this.raw_multicast_address + ":" + this.multicast_port);
+            this.multicast_address = InetAddress.getByName(this.raw_multicast_address);
+            soc_add = new InetSocketAddress(this.multicast_address, this.multicast_port);
+            mcSocket = new MulticastSocket(this.multicast_port);
 
             packet = new DatagramPacket(new byte[1024], 1024);
 
             while(true){
                 this.mcSocket.receive(packet);
-                if(inGroup == 0) break;
-                String msg = new String(this.packet.getData(), 
-                                        this.packet.getOffset(), 
-                                        this.packet.getLength());
-                System.out.println("[Multicast] Message:" + msg); 
+                if(in_group == 1){
+                    String msg = new String(this.packet.getData(), 
+                                            this.packet.getOffset(), 
+                                            this.packet.getLength());
+                    System.out.println("[Multicast]:" + msg); 
+                }
             }
         } catch(Exception e){ 
             e.printStackTrace(); 
@@ -150,50 +194,43 @@ class NodeMulticastServer extends Thread{
 }
 
 class NodeTCPServer extends Thread{
-    int port;
+    private int port;
+    private Socket socket = null;
+    private ServerSocket server = null;
+    private DataInputStream in =  null;
+    private DataOutputStream out = null;
 
     public NodeTCPServer(int port){
         this.port = port;
     }
 
     public void run(){
-        Socket socket = null;
-        ServerSocket server = null;
-        DataInputStream in =  null;
-        DataOutputStream out = null;
-
-        // starts server and waits for a connection
         try{
-            System.out.println("TCP Server On");
             server = new ServerSocket(this.port);
-            System.out.println("TCP Socket Address: " + server.getLocalSocketAddress());
-            System.out.println("TCP Socket Port: " + server.getLocalPort());
+            while(true){
+                System.out.println("Accepting TCP connections at " + server.getLocalSocketAddress());
+                socket = server.accept();
+                System.out.println("Client accepted");
 
-            socket = server.accept();
-            System.out.println("Client accepted");
+                in = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
 
-            in = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
-            out = new DataOutputStream(socket.getOutputStream());
+                String line = "";
 
-            String line = "";
-
-            // reads message from client until "Over" is sent
-            while (!line.equals("Over")){
-                try{
-                    line = in.readUTF();
-                    System.out.println(line);
-                    String receive = "Server received";
-                    out.writeUTF(receive);
+                while (!line.equals("close")){
+                    try{
+                        line = in.readUTF();
+                        System.out.println("[TCP]: " + line);
+                    }
+                    catch(IOException i){
+                        System.out.println(i);
+                    }
                 }
-                catch(IOException i){
-                    System.out.println(i);
-                }
+                System.out.println("Closing connection");
+
+                // close connection
+                socket.close();
+                in.close();
             }
-            System.out.println("Closing connection");
-
-            // close connection
-            socket.close();
-            in.close();
         }
         catch(IOException i){
             System.out.println(i);
@@ -202,16 +239,14 @@ class NodeTCPServer extends Thread{
 }
 
 class NodeTCPClient extends Thread{
-    String ip_target;
-    int port_target;
-    //BufferedReader input = null;
-    //DataInputStream input;
-    DataOutputStream out;
-    DataInputStream input_server;
-    String mess = "";
-    String rec = "";
-    Socket socket;
-    boolean is_connected = false;
+    private String ip_target;
+    private int port_target;
+    private DataOutputStream out;
+    private DataInputStream input_server;
+    private String mess = "";
+    private String rec = "";
+    private Socket socket;
+    private boolean is_connected = false;
 
     public NodeTCPClient(String target, String port){
         this.ip_target = target;
@@ -233,6 +268,7 @@ class NodeTCPClient extends Thread{
         try{
             out.close();
             socket.close();
+            System.out.println("Connection closed");
             return true;
         }
         catch(IOException e){
@@ -242,15 +278,12 @@ class NodeTCPClient extends Thread{
     }
 
     public void run(){
-        // establish a connection
         try{
             System.out.println("Preparing as a TCP client");
             socket = new Socket(this.ip_target, this.port_target);
             is_connected = true;
             System.out.println("Connected");
 
-            //input = new BufferedReader(new InputStreamReader(System.in));
-            //input  = new DataInputStream(System.in);
             out = new DataOutputStream(socket.getOutputStream());
             input_server = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
         }
@@ -260,32 +293,5 @@ class NodeTCPClient extends Thread{
         catch(IOException i){
             System.out.println("IOException: " + i);
         }
-
-        // string to read message from input
-        String line = "";
-        String server = "";
-
-        // keep reading until "Over" is input
-        /* while (!line.equals("Over")){
-            try{
-                //line = input.readLine();
-                out.writeUTF(line);
-                server = input_server.readUTF();
-                System.out.println(server);
-            }
-            catch(IOException i){
-                System.out.println(i);
-            }
-        }
-
-        // close the connection
-        try{
-            //input.close();
-            out.close();
-            socket.close();
-        }
-        catch(IOException i){
-            System.out.println(i);
-        } */
     }
 }

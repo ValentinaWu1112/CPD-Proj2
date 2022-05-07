@@ -6,6 +6,25 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+/* 
+    Questions:
+        1. How does a Node know that the Node he is establishing a TCP connection with
+        is already connected, through TCP, to some other Node? 
+        Since line 288 (socket = new Socket(this.ip_target, this.port_target);) doesnt
+        throw any exception, how could it know that it can't connect and therefore know
+        that it should wait for the requested Node availability. Even sending a TCP message
+        in this state (line 268) doesnt throw any exception..This is a problem since a Node
+        might think he is connected, when in fact he isn't, and start transmitting sensitive 
+        information thinking its arriving to the destination Node when in fact it's not, resulting
+        in information loss from an apparently reliable channel. 
+
+        Possible answer to 1. - Altough stalled, there is a connection, only when the Node, that
+        connected first, disconnects is the 'server' Node starts receiving the second connecting Node
+        messages. So a simple protocol of message exchanching before data transmission is required so
+        no information is lost.
+
+*/
+
 public class Node{
     public static void main(String args[]){
         NodeBrain nb = new NodeBrain(args[0], args[1]);
@@ -43,14 +62,18 @@ class NodeBrain extends Thread{
                     ntcpc.start();
                 }
                 else if(scanned[1].equals("send")){
-                    List<String> list = new ArrayList<String>(Arrays.asList(scanned));
-                    list.remove(scanned[0]);
-                    list.remove(scanned[1]);
-                    ntcpc.sendTCPMessage(String.join(" ", list));
+                    if(ntcpc != null){
+                        List<String> list = new ArrayList<String>(Arrays.asList(scanned));
+                        list.remove(scanned[0]);
+                        list.remove(scanned[1]);
+                        ntcpc.sendTCPMessage(String.join(" ", list));
+                    }
+                    else System.out.println("Unable to send TCP message, you must establish a connection first.");
                 }
                 else if(scanned[1].equals("close")){
                     ntcpc.sendTCPMessage(scanned[1]);
                     ntcpc.closeTCPConnection();
+                    ntcpc = null;
                 }
                 else{
                     System.err.println("Unknown command.");

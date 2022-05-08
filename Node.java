@@ -18,10 +18,8 @@ import java.util.Arrays;
         information thinking its arriving to the destination Node when in fact it's not, resulting
         in information loss from an apparently reliable channel. 
 
-        Possible answer to 1. - Altough stalled, there is a connection, only when the Node, that
-        connected first, disconnects is the 'server' Node starts receiving the second connecting Node
-        messages. So a simple protocol of message exchanching before data transmission is required so
-        no information is lost.
+        Possible answer to 1. - Simple protocol of message exchanching before data transmission is 
+        required so no information is lost.
 
 */
 

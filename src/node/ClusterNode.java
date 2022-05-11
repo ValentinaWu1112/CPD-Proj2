@@ -1,4 +1,4 @@
-package src.node;
+package node;
 
 import java.io.*;
 import java.net.*;
@@ -99,13 +99,11 @@ class ClusterNodeBrain extends Thread{
                 System.err.println("Unknown command.");
             }
         }
+        scan.close();
     }
 }
 
 class NodeMulticastClient extends Thread{
-    private Scanner scan = new Scanner(System.in); 
-    private DataInputStream input;
-    private DataOutputStream out;
     private String raw_ip;
     private int multicast_port;
     private InetAddress ip;
@@ -160,7 +158,6 @@ class NodeMulticastServer extends Thread{
     private DatagramPacket packet;
     private String raw_ip;
     private int multicast_port;
-    private String received_message;
     private volatile int in_group = 0;
 
     public NodeMulticastServer(String address, int port){
@@ -277,8 +274,6 @@ class NodeTCPClient extends Thread{
     private int port_target;
     private DataOutputStream out;
     private DataInputStream input_server;
-    private String mess = "";
-    private String rec = "";
     private Socket socket;
 
     public NodeTCPClient(String target, String port){

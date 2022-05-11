@@ -14,7 +14,7 @@ public class MulticastClient {
         String mcIPStr = "230.1.1.1";
         try{
             DatagramSocket udpSocket = new DatagramSocket(); 
-            // Prepare a message 
+            // Prepare a message
             InetAddress mcIPAddress = InetAddress.getByName(mcIPStr);
 
             // string to read message from input

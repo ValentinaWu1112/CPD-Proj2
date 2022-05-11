@@ -1,1 +1,3 @@
 *.class
+loopbackaddunix.txt
+rmi.txt

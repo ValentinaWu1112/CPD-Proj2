@@ -10,29 +10,33 @@ import java.util.Arrays;
 
 public class ClusterNode{
     public static void main(String args[]){
-        ClusterNodeBrain nb = new ClusterNodeBrain(args[0], args[1]);
+        ClusterNodeBrain nb = new ClusterNodeBrain(args[0], args[1], args[2]);
         nb.start();
     }
 }
 
 class ClusterNodeBrain extends Thread{
-    private String node_name;
+    private String node_tcp_ip;
     private int node_tcp_port;
     private NodeTCPServer ntcps;
     private NodeTCPClient ntcpc;
+    private String node_multicast_ip;
+    private int node_multicast_port;
     private NodeMulticastServer nms;
     private NodeMulticastClient nmc;
 
-    public ClusterNodeBrain(String name, String tcp_port){
-        this.node_name = name;
+    public ClusterNodeBrain(String multicast_ip, String tcp_ip, String tcp_port){
+        this.node_multicast_ip = multicast_ip;
+        this.node_multicast_port = 6666;
+        this.node_tcp_ip = tcp_ip;
         this.node_tcp_port = Integer.parseInt(tcp_port);
     }
 
     public void run(){
         Scanner scan = new Scanner(System.in);
-        nms = new NodeMulticastServer("224.0.0.1", 4000);
+        nms = new NodeMulticastServer(this.node_multicast_ip, this.node_multicast_port);
         nms.start();
-        ntcps = new NodeTCPServer(this.node_tcp_port);
+        ntcps = new NodeTCPServer(this.node_tcp_ip, this.node_tcp_port);
         ntcps.start();
 
         String[] scanned = {""};
@@ -74,7 +78,7 @@ class ClusterNodeBrain extends Thread{
             else if(scanned[0].equals("multicast")){
                 if(scanned[1].equals("join")){
                     nms.joinMulticastGroup();
-                    nmc = new NodeMulticastClient("224.0.0.1", 4000);
+                    nmc = new NodeMulticastClient("224.0.0.1", 6666);
                     nmc.start();
                 }
                 else if(scanned[1].equals("leave")){
@@ -102,14 +106,14 @@ class NodeMulticastClient extends Thread{
     private Scanner scan = new Scanner(System.in); 
     private DataInputStream input;
     private DataOutputStream out;
-    private String raw_multicast_address;
+    private String raw_ip;
     private int multicast_port;
-    private InetAddress multicast_address;
+    private InetAddress ip;
     private DatagramSocket udpSocket;
     private volatile int in_group = 1;
 
     public NodeMulticastClient(String address, int port){
-        this.raw_multicast_address = address;
+        this.raw_ip = address;
         this.multicast_port = port;
     }
 
@@ -129,7 +133,7 @@ class NodeMulticastClient extends Thread{
         }
         byte[] msg = message.getBytes();
         DatagramPacket packet = new DatagramPacket(msg, msg.length);
-        packet.setAddress(multicast_address);
+        packet.setAddress(this.ip);
         packet.setPort(this.multicast_port);
         try{
             udpSocket.send(packet);
@@ -142,7 +146,7 @@ class NodeMulticastClient extends Thread{
     public void run() {
         try{
             udpSocket = new DatagramSocket(); 
-            multicast_address = InetAddress.getByName(this.raw_multicast_address);
+            this.ip = InetAddress.getByName(this.raw_ip);
         } catch (Exception e){ 
             e.printStackTrace(); 
         }
@@ -150,17 +154,17 @@ class NodeMulticastClient extends Thread{
 }
 
 class NodeMulticastServer extends Thread{
-    private InetAddress multicast_address;
+    private InetAddress ip;
     private SocketAddress soc_add;
     private MulticastSocket mcSocket;
     private DatagramPacket packet;
-    private String raw_multicast_address;
+    private String raw_ip;
     private int multicast_port;
     private String received_message;
     private volatile int in_group = 0;
 
     public NodeMulticastServer(String address, int port){
-        this.raw_multicast_address = address;
+        this.raw_ip = address;
         this.multicast_port = port;
     }
 
@@ -186,9 +190,9 @@ class NodeMulticastServer extends Thread{
 
     public void run(){
         try{
-            System.out.println("Multicast Server On at " + this.raw_multicast_address + ":" + this.multicast_port);
-            this.multicast_address = InetAddress.getByName(this.raw_multicast_address);
-            soc_add = new InetSocketAddress(this.multicast_address, this.multicast_port);
+            System.out.println("Multicast Server On at " + this.raw_ip + ":" + this.multicast_port);
+            this.ip = InetAddress.getByName(this.raw_ip);
+            soc_add = new InetSocketAddress(this.ip, this.multicast_port);
             mcSocket = new MulticastSocket(this.multicast_port);
 
             packet = new DatagramPacket(new byte[1024], 1024);
@@ -209,6 +213,8 @@ class NodeMulticastServer extends Thread{
 }
 
 class NodeTCPServer extends Thread{
+    private String raw_ip;
+    private InetAddress ip;
     private int port;
     private Socket socket = null;
     private ServerSocket server = null;
@@ -226,13 +232,15 @@ class NodeTCPServer extends Thread{
         }
     }
 
-    public NodeTCPServer(int port){
+    public NodeTCPServer(String ip, int port){
+        this.raw_ip = ip;
         this.port = port;
     }
 
     public void run(){
         try{
-            server = new ServerSocket(this.port);
+            this.ip = InetAddress.getByName(this.raw_ip);
+            server = new ServerSocket(this.port, 50, this.ip);
             while(true){
                 System.out.println("Accepting TCP connections at " + server.getLocalSocketAddress());
                 socket = server.accept();

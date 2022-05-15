@@ -2,6 +2,7 @@ package node;
 
 import java.io.*;
 import java.net.*;
+import node.rmi.*;
 import java.lang.Thread;
 import java.util.Scanner;
 import java.util.List;

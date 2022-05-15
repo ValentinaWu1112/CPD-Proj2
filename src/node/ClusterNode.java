@@ -18,12 +18,13 @@ public class ClusterNode{
 class ClusterNodeBrain extends Thread{
     private String node_tcp_ip;
     private int node_tcp_port;
-    private NodeTCPServer ntcps;
-    private NodeTCPClient ntcpc;
+    /* private NodeTCPServer ntcps;
+    private NodeTCPClient ntcpc; */
     private String node_multicast_ip;
     private int node_multicast_port;
-    private NodeMulticastServer nms;
-    private NodeMulticastClient nmc;
+    /* private NodeMulticastServer nms;
+    private NodeMulticastClient nmc; */
+    private RMIServer nrmis;
 
     public ClusterNodeBrain(String multicast_ip, String tcp_ip, String tcp_port){
         this.node_multicast_ip = multicast_ip;
@@ -33,13 +34,16 @@ class ClusterNodeBrain extends Thread{
     }
 
     public void run(){
-        Scanner scan = new Scanner(System.in);
-        nms = new NodeMulticastServer(this.node_multicast_ip, this.node_multicast_port);
+        //Scanner scan = new Scanner(System.in);
+        /* nms = new NodeMulticastServer(this.node_multicast_ip, this.node_multicast_port);
         nms.start();
         ntcps = new NodeTCPServer(this.node_tcp_ip, this.node_tcp_port);
-        ntcps.start();
+        ntcps.start(); */
+        System.out.println("ClusterNodeBrain");
+        nrmis = new RMIServer(this.node_tcp_ip, this.node_tcp_port, this.node_multicast_ip, this.node_multicast_port);
+        nrmis.start();
 
-        String[] scanned = {""};
+        /* String[] scanned = {""};
         while(!scanned[0].equals("stop")){
             String raw_scanned = scan.nextLine();
             scanned = raw_scanned.split(" ");
@@ -99,11 +103,11 @@ class ClusterNodeBrain extends Thread{
                 System.err.println("Unknown command.");
             }
         }
-        scan.close();
+        scan.close();*/
     }
 }
 
-class NodeMulticastClient extends Thread{
+/* class NodeMulticastClient extends Thread{
     private String raw_ip;
     private int multicast_port;
     private InetAddress ip;
@@ -141,7 +145,7 @@ class NodeMulticastClient extends Thread{
         return;
     }
 
-    public void run() {
+    public void run(){
         try{
             udpSocket = new DatagramSocket(); 
             this.ip = InetAddress.getByName(this.raw_ip);
@@ -149,9 +153,9 @@ class NodeMulticastClient extends Thread{
             e.printStackTrace(); 
         }
     } 
-}
+} */
 
-class NodeMulticastServer extends Thread{
+/* class NodeMulticastServer extends Thread{
     private InetAddress ip;
     private SocketAddress soc_add;
     private MulticastSocket mcSocket;
@@ -207,9 +211,9 @@ class NodeMulticastServer extends Thread{
             e.printStackTrace(); 
         }
     }
-}
+} */
 
-class NodeTCPServer extends Thread{
+/* class NodeTCPServer extends Thread{
     private String raw_ip;
     private InetAddress ip;
     private int port;
@@ -257,7 +261,6 @@ class NodeTCPServer extends Thread{
                     }
                 }
 
-                // close connection
                 socket.close();
                 in.close();
                 System.out.println("Connection closed.");
@@ -267,9 +270,9 @@ class NodeTCPServer extends Thread{
             System.out.println(i);
         }
     }
-}
+} */
 
-class NodeTCPClient extends Thread{
+/* class NodeTCPClient extends Thread{
     private String ip_target;
     private int port_target;
     private DataOutputStream out;
@@ -331,4 +334,4 @@ class NodeTCPClient extends Thread{
             System.out.println("IOException: " + i);
         }
     }
-}
+} */

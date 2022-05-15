@@ -1,1 +1,1 @@
-# Distributed and Partitioned Key-Value Store 
+# Distributed and Partitioned Key-Value Store

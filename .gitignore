@@ -1,3 +1,4 @@
+rmi/*
 *.class
 loopbackaddunix.txt
 rmi.txt

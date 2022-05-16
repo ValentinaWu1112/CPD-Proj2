@@ -9,7 +9,8 @@ import node.multicast.*;
 
 /* 
     While RMIServer thread is responsible for receiving nodes info (communication addresses),
-    RMIServerBrain implements the API interface handling node tasks.
+    RMIServerBrain implements the API interface handling node tasks. The RMIServerBrain thread 
+    starts the Multicast and TCP 'server sides' since it needs access to these objects.
 */
 
 public class RMIServer extends Thread{
@@ -61,9 +62,38 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
 
     public boolean joinMulticastGroup(){
         System.out.println("joinMulticastGroup");
+        /* 
+            The node joins the group.
+        */
         nms.joinMulticastGroup();
+        /* 
+            The node starts listening for TCP connections. It must know the
+            current state of the cluster.
+        */
+        ntcps = new NodeTCPServer(this.tcp_ip, this.tcp_port);
+        ntcps.start();
+        /* 
+            Multicast client is initialized, meaning the node is able to
+            iteract within the cluster.
+        */
         nmc = new NodeMulticastClient(this.multicast_ip, this.multicast_port);
         nmc.start();
+        /* 
+            Since threads run asynchronously, this makes sure UDP Socket
+            is ready before multicast message is sent.
+        */
+        while(!nmc.getUDPSocket()){}
+        /* 
+            After start listening for TCP connections, the node multicasts
+            that it joined the group. This message causes the other cluster 
+            nodes to, after a random time length, connect via TCP and transfer
+            the current membership status, i.e, their most recent 32 membership
+            log messages aswell as a list of the current membership members.
+
+            TODO: Part of the 'Membership Protocol (Theory) task'. Define the
+            multicast messages format.
+        */
+        nmc.sendMulticastMessage("message");
         return true;
     }
 
@@ -71,6 +101,8 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
         System.out.println("leaveMulticastGroup");
         nmc.setInGroup(0);
         nms.leaveMulticastGroup();
+        ntcpc.closeTCPConnection();
+        ntcpc = null;
         return false;
     }
 
@@ -91,9 +123,13 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
 
     public void run() {
         System.out.println("RMIServerBrain");
+        /* 
+            Although the Multicast Server is initialized the moment the node is created, 
+            it is not able to interact with the cluster, it must join the group first. 
+            This could also be done when the node joins the cluster group, but (i think)
+            it results in a lighter JOIN operation.
+        */
         nms = new NodeMulticastServer(this.multicast_ip, this.multicast_port);
         nms.start();
-        ntcps = new NodeTCPServer(this.tcp_ip, this.tcp_port);
-        ntcps.start();
     }
 }

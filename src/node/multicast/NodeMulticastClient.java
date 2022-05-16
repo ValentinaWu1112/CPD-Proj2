@@ -9,14 +9,14 @@ import java.lang.Thread;
 */
 
 public class NodeMulticastClient extends Thread{
-    private String raw_ip;
+    private String raw_multicast_ip;
     private int multicast_port;
-    private InetAddress ip;
+    private InetAddress multicast_ip;
     private DatagramSocket udpSocket;
     private volatile int in_group = 1;
 
     public NodeMulticastClient(String address, int port){
-        this.raw_ip = address;
+        this.raw_multicast_ip = address;
         this.multicast_port = port;
     }
 
@@ -36,20 +36,24 @@ public class NodeMulticastClient extends Thread{
         }
         byte[] msg = message.getBytes();
         DatagramPacket packet = new DatagramPacket(msg, msg.length);
-        packet.setAddress(this.ip);
-        packet.setPort(this.multicast_port);
         try{
-            udpSocket.send(packet);
+            packet.setAddress(this.multicast_ip);
+            packet.setPort(this.multicast_port);
+            this.udpSocket.send(packet);
         } catch(IOException e){
             System.out.println(e);
         }
         return;
     }
 
+    public boolean getUDPSocket(){
+        return udpSocket == null ? false : true;
+    }
+
     public void run(){
         try{
-            udpSocket = new DatagramSocket(); 
-            this.ip = InetAddress.getByName(this.raw_ip);
+            this.udpSocket = new DatagramSocket();
+            this.multicast_ip = InetAddress.getByName(this.raw_multicast_ip);
         } catch (Exception e){ 
             e.printStackTrace(); 
         }

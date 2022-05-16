@@ -1,11 +1,12 @@
 # Distributed and Partitioned Key-Value Store
 
 ### TODO
-- [x] Node multicast communication
+- [ ] Membership Protocol
+- [x] Node Multicast communication
 - [x] Node TCP communication
 - [ ] Node filesystem structure
 - [ ] Node file I/O
-- [x] RMI server implementation
+- [x] RMI Server implementation
 - [ ] Node RMI task JOIN
 - [ ] Node RMI task LEAVE
 - [ ] Node RMI task GET 

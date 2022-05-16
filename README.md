@@ -1,7 +1,7 @@
 # Distributed and Partitioned Key-Value Store
 
 ### TODO
-- [ ] Membership Protocol
+- [ ] Membership Protocol (Theory)
 - [x] Node Multicast communication
 - [x] Node TCP communication
 - [ ] Node filesystem structure

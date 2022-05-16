@@ -1,4 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env python3
 
-read add
-sudo ifconfig lo0 alias $add up
+import sys
+import os
+
+os.system("sudo ifconfig lo0 alias "+sys.argv[1]+" up");

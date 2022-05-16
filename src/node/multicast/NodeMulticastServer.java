@@ -4,6 +4,11 @@ import java.io.*;
 import java.net.*;
 import java.lang.Thread;
 
+/* 
+    Thread responsible for maintaing multicast connection up, joing/leaving
+    group and receive multicast messages. 
+*/
+
 public class NodeMulticastServer extends Thread{
     private InetAddress ip;
     private SocketAddress soc_add;

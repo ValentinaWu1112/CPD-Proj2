@@ -4,7 +4,6 @@ import java.rmi.registry.Registry;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
 import java.lang.Thread;
-import node.rmi.*;
 import node.tcp.*;
 import node.multicast.*;
 
@@ -28,8 +27,9 @@ public class RMIServer extends Thread{
             RMIServerBrain rmiServer = new RMIServerBrain(tcp_ip, tcp_port, multicast_ip, multicast_port);
             rmiServer.start();
             RMIServerAPI stubRMIAPI = (RMIServerAPI) UnicastRemoteObject.exportObject(rmiServer, 0);
-            Registry registryClusterMembership = LocateRegistry.createRegistry(1090);
+            Registry registryClusterMembership = LocateRegistry.getRegistry(1090);
             registryClusterMembership.bind(tcp_ip+"RMIAPI", stubRMIAPI);
+            System.out.println("RMI Server activated!");
         } catch (Exception e){
             System.err.println("Server exception: " + e.toString());
             e.printStackTrace();

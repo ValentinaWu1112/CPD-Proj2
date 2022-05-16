@@ -1,4 +1,4 @@
-rmi/*
 *.class
-loopbackaddunix.txt
-rmi.txt
+test/*
+loopbackaddunix
+rmiman

@@ -65,7 +65,6 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
         /* 
             The node joins the group.
         */
-        
         nms.joinMulticastGroup();
         /* 
             The node starts listening for TCP connections. It must know the

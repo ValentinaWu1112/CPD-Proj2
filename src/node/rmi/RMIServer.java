@@ -65,19 +65,24 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
         /* 
             The node joins the group.
         */
+        
         nms.joinMulticastGroup();
         /* 
             The node starts listening for TCP connections. It must know the
             current state of the cluster.
         */
-        ntcps = new NodeTCPServer(this.tcp_ip, this.tcp_port);
-        ntcps.start();
+        if(ntcps == null){
+            ntcps = new NodeTCPServer(this.tcp_ip, this.tcp_port);
+            ntcps.start();
+        }
         /* 
             Multicast client is initialized, meaning the node is able to
             iteract within the cluster.
         */
-        nmc = new NodeMulticastClient(this.multicast_ip, this.multicast_port);
-        nmc.start();
+        if(nmc == null){
+            nmc = new NodeMulticastClient(this.multicast_ip, this.multicast_port);
+            nmc.start();
+        }
         /* 
             Since threads run asynchronously, this makes sure UDP Socket
             is ready before multicast message is sent.
@@ -93,6 +98,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
             TODO: Part of the 'Membership Protocol (Theory) task'. Define the
             multicast messages format.
         */
+        nmc.setInGroup(1);
         nmc.sendMulticastMessage("message");
         return true;
     }
@@ -101,8 +107,6 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
         System.out.println("leaveMulticastGroup");
         nmc.setInGroup(0);
         nms.leaveMulticastGroup();
-        ntcpc.closeTCPConnection();
-        ntcpc = null;
         return false;
     }
 

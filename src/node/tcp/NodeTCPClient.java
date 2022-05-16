@@ -4,6 +4,11 @@ import java.io.*;
 import java.net.*;
 import java.lang.Thread;
 
+/* 
+    Thread responsible for TCP 'client side', i.e, starting TCP connections, sending messages and
+    closing connections. 
+*/
+
 public class NodeTCPClient extends Thread{
     private String ip_target;
     private int port_target;

@@ -4,6 +4,10 @@ import java.io.*;
 import java.net.*;
 import java.lang.Thread;
 
+/* 
+    Thread responsible for TCP 'server side', i.e, listens for connections and receives messages..
+*/
+
 public class NodeTCPServer extends Thread{
     private String raw_ip;
     private InetAddress ip;

@@ -9,6 +9,11 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+/* 
+    ClustedNode runs ClustedNodeBrain thread, the latter starts nodes RMI server allowing 
+    the node to be controlled by Client.
+*/
+
 public class ClusterNode{
     public static void main(String args[]){
         ClusterNodeBrain nb = new ClusterNodeBrain(args[0], args[1], args[2]);

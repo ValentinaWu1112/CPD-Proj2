@@ -2,10 +2,11 @@ package client;
 
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-
 import node.rmi.RMIServerAPI;
 
-
+/* 
+    Client class responsible for node interaction handling.
+*/
 
 public class Client {
     private static String tcp_ip;

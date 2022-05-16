@@ -4,6 +4,10 @@ import java.io.*;
 import java.net.*;
 import java.lang.Thread;
 
+/* 
+    Thread responsible for multicast interaction, i.e, sending multicast messages.. 
+*/
+
 public class NodeMulticastClient extends Thread{
     private String raw_ip;
     private int multicast_port;

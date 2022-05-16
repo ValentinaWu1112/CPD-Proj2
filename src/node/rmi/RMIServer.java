@@ -7,6 +7,11 @@ import java.lang.Thread;
 import node.tcp.*;
 import node.multicast.*;
 
+/* 
+    While RMIServer thread is responsible for receiving nodes info (communication addresses),
+    RMIServerBrain implements the API interface handling nodes tasks.
+*/
+
 public class RMIServer extends Thread{
     private String tcp_ip;
     private int tcp_port;

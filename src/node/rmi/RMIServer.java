@@ -9,7 +9,7 @@ import node.multicast.*;
 
 /* 
     While RMIServer thread is responsible for receiving nodes info (communication addresses),
-    RMIServerBrain implements the API interface handling nodes tasks.
+    RMIServerBrain implements the API interface handling node tasks.
 */
 
 public class RMIServer extends Thread{

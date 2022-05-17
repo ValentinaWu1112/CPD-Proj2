@@ -61,6 +61,10 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
     }
 
     public boolean joinMulticastGroup(){
+        if(nms.getInGroup() == 1){
+            System.out.println("Already in group.");
+            return true;
+        }
         System.out.println("joinMulticastGroup");
         /* 
             The node joins the group.

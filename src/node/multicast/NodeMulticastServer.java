@@ -23,6 +23,10 @@ public class NodeMulticastServer extends Thread{
         this.multicast_port = port;
     }
 
+    public int getInGroup(){
+        return this.in_group;
+    }
+
     public void joinMulticastGroup(){
         try{
             in_group = 1;

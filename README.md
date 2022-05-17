@@ -12,4 +12,4 @@
 - [ ] Node RMI task GET 
 - [ ] Node RMI task PUT
 - [ ] Node RMI task DELETE
-- [ ] SHA-256 Encode (file content -> hash key)
+- [x] SHA-256 Encode (ex.: file content -> hash key)

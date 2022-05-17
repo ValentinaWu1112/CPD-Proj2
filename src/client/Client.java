@@ -3,6 +3,7 @@ package client;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import node.rmi.RMIServerAPI;
+import crypto.Crypto;
 
 /* 
     Client class responsible for node interaction handling.
@@ -32,6 +33,11 @@ public class Client {
                 case "leave":
                     verdict = stubRMIServerAPI.leaveMulticastGroup();
                     System.out.println("leavemc: " + verdict);
+                    break;
+                case "put":
+                    String value = args[2];
+                    String hash_value = Crypto.encodeValue(value);
+                    System.out.println("value: " + value + "\nhashed: " + hash_value);
                     break;
             }
             //response = stubRMIServerAPI.leaveMulticastGroup();

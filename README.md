@@ -19,6 +19,9 @@ How to execute:
     cd src/
     ./compile.sh
 
+    Initialize registry:
+        rmiregistry 1090
+
     Create a node:
         .startadd 127.0.0.1
         java node/ClusterNode 224.0.0.1 127.0.0.1 7999

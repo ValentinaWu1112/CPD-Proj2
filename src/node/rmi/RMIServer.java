@@ -3,9 +3,7 @@ package node.rmi;
 import java.rmi.registry.Registry;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
-
 import crypto.Crypto;
-
 import java.lang.Thread;
 import node.tcp.*;
 import node.multicast.*;
@@ -118,7 +116,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
         return false;
     }
 
-    public boolean getValue(){
+    public boolean getValue(String key){
         System.out.println("getValue");
         return true;
     }
@@ -128,7 +126,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
         return true;
     }
 
-    public boolean deleteValue(){
+    public boolean deleteValue(String key){
         System.out.println("deleteValue");
         return false;
     }

@@ -2,7 +2,7 @@
 
 File system structure
 
-nodes/
+global/
     hash1/
         membership/
             counter.txt

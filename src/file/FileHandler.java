@@ -1,6 +1,7 @@
 package file;
 
 import java.io.File;
+import java.io.FileWriter; 
 
 /* 
     Static class meant to ease file/directory manipulation.
@@ -21,7 +22,7 @@ public final class FileHandler {
                 System.err.println("File '" + name + "' in path '" + path + "' already exists.");
                 return false;
             }
-        } catch (Exception e) {
+        } catch(Exception e){
             e.printStackTrace();
             return false;
         }
@@ -38,7 +39,22 @@ public final class FileHandler {
                 System.err.println("Directory '" + name + "' in path '" + path + "' already exists.");
                 return false;
             }
-        } catch (Exception e) {
+        } catch(Exception e){
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /* 
+        Note: this method will overwrite everything in the specified file!
+    */
+    public static boolean writeFile(String path, String name, String value){
+        try {
+            FileWriter myWriter = new FileWriter(path + "" + name + ".txt");
+            myWriter.write(value);
+            myWriter.close();
+            return true;
+        } catch(Exception e){
             e.printStackTrace();
             return false;
         }

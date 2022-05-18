@@ -40,6 +40,7 @@ public class Client {
                     String hash_value = Crypto.encodeValue(value);
                     FileHandler.createFile("../global/", "file1");
                     FileHandler.createDirectory("../global/", "filesnode1");
+                    FileHandler.writeFile("../global/", "file1", "olaxd");
                     System.out.println("value: " + value + "\nhashed: " + hash_value);
                     break;
             }

@@ -14,8 +14,7 @@
 - [ ] Node RMI task DELETE
 - [x] SHA-256 Encode (ex.: file content -> hash key)
 
-How to execute:
-
+#### How to execute:
     cd src/
     ./compile.sh
 

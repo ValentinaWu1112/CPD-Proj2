@@ -46,7 +46,9 @@ public final class FileHandler {
     }
 
     /* 
-        Note: this method will overwrite everything in the specified file!
+        Note: this method will overwrite everything in the specified file! 
+            It also creates the specified path+name file, this makes the 
+            createFile method sort of useless.
     */
     public static boolean writeFile(String path, String name, String value){
         try {

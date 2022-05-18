@@ -1,7 +1,9 @@
 package file;
 
 import java.io.File;
-import java.io.FileWriter; 
+import java.io.FileWriter;
+import java.io.FileReader;
+import java.io.BufferedReader;
 
 /* 
     Static class meant to ease file/directory manipulation.
@@ -59,6 +61,24 @@ public final class FileHandler {
         } catch(Exception e){
             e.printStackTrace();
             return false;
+        }
+    }
+
+    public static String readFile(String path, String name){
+        try(BufferedReader br = new BufferedReader(new FileReader(path + "" + name + ".txt"))) {
+            StringBuilder sb = new StringBuilder();
+            String line = br.readLine();
+        
+            while (line != null) {
+                sb.append(line);
+                sb.append(System.lineSeparator());
+                line = br.readLine();
+            }
+            String everything = sb.toString();
+            return everything;
+        } catch(Exception e){
+            e.printStackTrace();
+            return null;
         }
     }
 

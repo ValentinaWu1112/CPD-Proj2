@@ -41,6 +41,7 @@ public class Client {
                     FileHandler.createFile("../global/", "file1");
                     FileHandler.createDirectory("../global/", "filesnode1");
                     FileHandler.writeFile("../global/", "file1", "olaxd");
+                    System.out.print(FileHandler.readFile("../global/", "file1"));
                     System.out.println("value: " + value + "\nhashed: " + hash_value);
                     break;
             }

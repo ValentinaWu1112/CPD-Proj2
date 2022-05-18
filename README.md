@@ -13,3 +13,18 @@
 - [ ] Node RMI task PUT
 - [ ] Node RMI task DELETE
 - [x] SHA-256 Encode (ex.: file content -> hash key)
+
+How to execute:
+
+    cd src/
+    ./compile.sh
+
+    Initialize registry:
+        rmiregistry 1090
+
+    Create a node:
+        .startadd 127.0.0.1
+        java node/ClusterNode 224.0.0.1 127.0.0.1 7999
+
+    Interact with nodes: 
+        java client/Client 127.0.0.1 join

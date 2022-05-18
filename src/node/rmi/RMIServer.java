@@ -3,6 +3,9 @@ package node.rmi;
 import java.rmi.registry.Registry;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
+
+import crypto.Crypto;
+
 import java.lang.Thread;
 import node.tcp.*;
 import node.multicast.*;
@@ -14,6 +17,7 @@ import node.multicast.*;
 */
 
 public class RMIServer extends Thread{
+    private String node_key;
     private String tcp_ip;
     private int tcp_port;
     private String multicast_ip;
@@ -24,6 +28,7 @@ public class RMIServer extends Thread{
         this.tcp_port = tcp_port;
         this.multicast_ip = multicast_ip;
         this.multicast_port = multicast_port;
+        this.node_key = Crypto.encodeValue(this.tcp_ip);
     }
 
     @Override
@@ -118,7 +123,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
         return true;
     }
 
-    public boolean putValue(){
+    public boolean putValue(String key, String value){
         System.out.println("putValue");
         return true;
     }

@@ -1,4 +1,6 @@
 *.class
 test/*
+global/
 loopbackaddunix
 rmiman
+

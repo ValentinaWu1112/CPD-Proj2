@@ -62,7 +62,7 @@ public class NodeMulticastServer extends Thread{
                     String msg = new String(this.packet.getData(), 
                                             this.packet.getOffset(), 
                                             this.packet.getLength());
-                    System.out.println("[Multicast]:" + msg); 
+                    System.out.println("[Multicast]:" + msg);
                 }
             }
         } catch(Exception e){ 

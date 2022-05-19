@@ -3,6 +3,7 @@ package node.rmi;
 import java.rmi.registry.Registry;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
+import crypto.Crypto;
 import java.lang.Thread;
 import node.tcp.*;
 import node.multicast.*;
@@ -14,23 +15,24 @@ import node.multicast.*;
 */
 
 public class RMIServer extends Thread{
+    private final String node_key;
     private String tcp_ip;
     private int tcp_port;
     private String multicast_ip;
     private int multicast_port;
 
-    public RMIServer(String tcp_ip, int tcp_port, String multicast_ip, int multicast_port){
+    public RMIServer(String tcp_ip, int tcp_port, String multicast_ip, int multicast_port, String node_key){
         this.tcp_ip = tcp_ip;
         this.tcp_port = tcp_port;
         this.multicast_ip = multicast_ip;
         this.multicast_port = multicast_port;
+        this.node_key = node_key;
     }
 
     @Override
     public void run(){
         try{
-            //System.setProperty("java.rmi.server.hostname", "192.168.1.67");
-            RMIServerBrain rmiServer = new RMIServerBrain(tcp_ip, tcp_port, multicast_ip, multicast_port);
+            RMIServerBrain rmiServer = new RMIServerBrain(tcp_ip, tcp_port, multicast_ip, multicast_port, node_key);
             rmiServer.start();
             RMIServerAPI stubRMIAPI = (RMIServerAPI) UnicastRemoteObject.exportObject(rmiServer, 0);
             Registry registryClusterMembership = LocateRegistry.getRegistry(1090);
@@ -44,6 +46,7 @@ public class RMIServer extends Thread{
 }
 
 class RMIServerBrain extends Thread implements RMIServerAPI{
+    private final String node_key;
     private String tcp_ip;
     private int tcp_port;
     private NodeTCPServer ntcps;
@@ -53,16 +56,17 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
     private NodeMulticastClient nmc;
     private NodeMulticastServer nms;
 
-    public RMIServerBrain(String tcp_ip, int tcp_port, String multicast_ip, int multicast_port){
+    public RMIServerBrain(String tcp_ip, int tcp_port, String multicast_ip, int multicast_port, String node_key){
         this.tcp_ip = tcp_ip;
         this.tcp_port = tcp_port;
         this.multicast_ip = multicast_ip;
         this.multicast_port = multicast_port;
+        this.node_key = node_key;
     }
 
     public boolean joinMulticastGroup(){
         if(nms.getInGroup() == 1){
-            System.out.println("Already in group.");
+            System.err.println("Already in group.");
             return true;
         }
         System.out.println("joinMulticastGroup");
@@ -107,23 +111,27 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
     }
 
     public boolean leaveMulticastGroup(){
+        if(nms.getInGroup() == 0){
+            System.err.println("Already out of group.");
+            return true;
+        }
         System.out.println("leaveMulticastGroup");
         nmc.setInGroup(0);
         nms.leaveMulticastGroup();
         return false;
     }
 
-    public boolean getValue(){
+    public boolean getValue(String key){
         System.out.println("getValue");
         return true;
     }
 
-    public boolean putValue(){
+    public boolean putValue(String key, String value){
         System.out.println("putValue");
         return true;
     }
 
-    public boolean deleteValue(){
+    public boolean deleteValue(String key){
         System.out.println("deleteValue");
         return false;
     }

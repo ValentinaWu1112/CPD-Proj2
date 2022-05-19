@@ -32,7 +32,6 @@ public class RMIServer extends Thread{
     @Override
     public void run(){
         try{
-            //System.setProperty("java.rmi.server.hostname", "192.168.1.67");
             RMIServerBrain rmiServer = new RMIServerBrain(tcp_ip, tcp_port, multicast_ip, multicast_port, node_key);
             rmiServer.start();
             RMIServerAPI stubRMIAPI = (RMIServerAPI) UnicastRemoteObject.exportObject(rmiServer, 0);
@@ -67,7 +66,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
 
     public boolean joinMulticastGroup(){
         if(nms.getInGroup() == 1){
-            System.out.println("Already in group.");
+            System.err.println("Already in group.");
             return true;
         }
         System.out.println("joinMulticastGroup");
@@ -112,6 +111,10 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
     }
 
     public boolean leaveMulticastGroup(){
+        if(nms.getInGroup() == 0){
+            System.err.println("Already out of group.");
+            return true;
+        }
         System.out.println("leaveMulticastGroup");
         nmc.setInGroup(0);
         nms.leaveMulticastGroup();

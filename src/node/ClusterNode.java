@@ -3,6 +3,9 @@ package node;
 import node.rmi.*;
 import java.lang.Thread;
 
+import crypto.Crypto;
+import file.FileHandler;
+
 /* 
     ClustedNode runs ClustedNodeBrain thread, the latter starts nodes RMI server allowing 
     the node to be controlled by Client.
@@ -16,6 +19,7 @@ public class ClusterNode{
 }
 
 class ClusterNodeBrain extends Thread{
+    private final String node_key;
     private String node_tcp_ip;
     private int node_tcp_port;
     private String node_multicast_ip;
@@ -27,11 +31,25 @@ class ClusterNodeBrain extends Thread{
         this.node_multicast_port = 6666;
         this.node_tcp_ip = tcp_ip;
         this.node_tcp_port = Integer.parseInt(tcp_port);
+        this.node_key = Crypto.encodeValue(this.node_tcp_ip);
+    }
+
+    private boolean initNodeFileSystem(){
+        try {
+            FileHandler.createDirectory("../global/", this.node_key);
+            FileHandler.createDirectory("../global/" + this.node_key + "/", "membership");
+            FileHandler.createDirectory("../global/" + this.node_key + "/", "storage");
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     public void run(){
         System.out.println("ClusterNodeBrain");
-        nrmis = new RMIServer(this.node_tcp_ip, this.node_tcp_port, this.node_multicast_ip, this.node_multicast_port);
+        initNodeFileSystem();
+        nrmis = new RMIServer(this.node_tcp_ip, this.node_tcp_port, this.node_multicast_ip, this.node_multicast_port, this.node_key);
         nrmis.start();
     }
 }

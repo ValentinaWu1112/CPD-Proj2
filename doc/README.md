@@ -2,17 +2,21 @@
 
 File system structure
 
+```
 global/
-    hash1/
+    node1_key/
         membership/
             counter.txt
             log.txt
-        files/
-            hash_file1.txt
-    hash2/
+        storage/
+            file79_key.txt
+    node2_key/
         membership/
             counter.txt
             log.txt
-        files/
-            file1.txt
-*/
+        storage/
+            file32_key.txt
+```
+
+    - Since demo is executed in a single computer, global directory contains
+        all information kept by every node following the above structure.

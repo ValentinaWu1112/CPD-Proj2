@@ -32,7 +32,7 @@ public final class FileHandler {
 
     public static boolean createDirectory(String path, String name){
         try {
-            File new_dir = new File(path + "" + name + ".txt");
+            File new_dir = new File(path + "" + name);
             if(!new_dir.exists()){
                 new_dir.mkdirs();
                 return true;

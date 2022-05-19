@@ -5,7 +5,7 @@
 - [x] Node Multicast communication
 - [x] Node TCP communication
 - [ ] Node filesystem structure
-- [ ] Node file I/O
+- [x] Node file I/O
 - [x] RMI Server implementation
 - [ ] Node RMI task JOIN
 - [ ] Node RMI task LEAVE

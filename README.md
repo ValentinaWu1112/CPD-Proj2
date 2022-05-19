@@ -27,3 +27,11 @@
 
     Interact with nodes: 
         java client/Client 127.0.0.1 join
+
+#### Crypto class usage:
+    - Crypto.encodeValue(value);
+
+#### FileHandler class usage:
+    - FileHandler.createFile("../global/", "file1");
+    - FileHandler.createDirectory("../global/", "filesnode1");
+    - FileHandler.writeFile("../global/", "file1", "content");

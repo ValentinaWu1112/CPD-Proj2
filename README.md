@@ -29,7 +29,7 @@
         java client/Client 127.0.0.1 join
 
 #### Crypto class usage:
-    - Crypto.encodeValue(value);
+    - Crypto.encodeValue("value");
 
 #### FileHandler class usage:
     - FileHandler.createFile("../global/", "file1");

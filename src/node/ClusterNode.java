@@ -13,7 +13,7 @@ import file.FileHandler;
 
 public class ClusterNode{
     public static void main(String args[]){
-        ClusterNodeBrain nb = new ClusterNodeBrain(args[0], args[1], args[2]);
+        ClusterNodeBrain nb = new ClusterNodeBrain(args[0], args[1], args[2], args[3]);
         nb.start();
     }
 }
@@ -26,9 +26,9 @@ class ClusterNodeBrain extends Thread{
     private int node_multicast_port;
     private RMIServer nrmis;
 
-    public ClusterNodeBrain(String multicast_ip, String tcp_ip, String tcp_port){
+    public ClusterNodeBrain(String multicast_ip, String multicast_port, String tcp_ip, String tcp_port){
         this.node_multicast_ip = multicast_ip;
-        this.node_multicast_port = 6666;
+        this.node_multicast_port = Integer.parseInt(multicast_port);
         this.node_tcp_ip = tcp_ip;
         this.node_tcp_port = Integer.parseInt(tcp_port);
         this.node_key = Crypto.encodeValue(this.node_tcp_ip);

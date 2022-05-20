@@ -23,10 +23,10 @@
 
     Create a node:
         .startadd 127.0.0.1
-        java node/ClusterNode 224.0.0.1 6666 127.0.0.1 7999
+        java -cp ".:../libs/json-20220320.jar" node/ClusterNode 224.0.0.1 6666 127.0.0.1 7999
 
     Interact with nodes: 
-        java client/Client 127.0.0.1 join
+        java -cp ".:../libs/json-20220320.jar" client/Client 127.0.0.1 join
 
 ### How install the package org.json
     - https://www.tutorialspoint.com/org_json/org_json_quick_guide.htm

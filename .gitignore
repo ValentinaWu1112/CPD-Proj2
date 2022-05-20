@@ -3,4 +3,4 @@ test/*
 global/
 loopbackaddunix
 rmiman
-
+rmi/

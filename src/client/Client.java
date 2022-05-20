@@ -5,6 +5,7 @@ import java.rmi.registry.Registry;
 import node.rmi.RMIServerAPI;
 import crypto.Crypto;
 import file.FileHandler;
+import file.JSONHandler;
 
 /* 
     Client class responsible for node interaction handling.
@@ -19,11 +20,12 @@ public class Client {
 
     public static void main(String[] args) {
         try {
+            JSONHandler.jsonTest();
             tcp_ip = args[0];
             operation = args[1];
             Registry registryRMIServerAPI = LocateRegistry.getRegistry(1090);
             RMIServerAPI stubRMIServerAPI = (RMIServerAPI) registryRMIServerAPI.lookup(tcp_ip+"RMIAPI");
-            /* 
+            /*
                 TODO: Add remaining operations 
             */
             switch(operation){

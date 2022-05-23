@@ -18,8 +18,7 @@ global/
             file32_key.txt
 ```
 
-    - Since demo is executed in a single computer, global directory contains
-        all information kept by every node following the above structure.
+Since demo is executed in a single computer, global directory contains all information kept by every node following the above structure.
 
 
 ### Messages structure: 

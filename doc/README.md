@@ -27,25 +27,24 @@ Messages structure:
 - JOIN:
 
 (Before sending the JOIN message, the new member starts accepting connections on a IP whose number it sends in its JOIN message)
-- join_nodeId:hashNode (via ?)
 
-- join_counter:n (via multicast)
+- joinReq_nodeId_counter (via multicast)
 
 (some of the cluster member will send the new member a MemberShip message) (via TCP)
-- join_listMember:contentList
-- join_logs:contentLogs
+- joinMember_listMember
+- joinLogs_logs
 
 (send storage values after a join) (via  ?)
-- join_value:contentValue
+- joinValue_value
 
 
 - LEAVE:
 
 (before leaving the cluster, i.e. multicasting the LEAVE message, the node should transfer its key-value pairs to its successor.)
-- leave_key:hash_value:value (via ?) -> (estou confusa com o key e value)
+- leaveValue_key_value (via ?) -> (estou confusa com o key e value)
 
-- leave_counter:n
+- leaveReq_nodeId_counter (via ?)
 
 
 - PUT:
-- put_key:key_value:value
+- putReq_key_value (via ?)

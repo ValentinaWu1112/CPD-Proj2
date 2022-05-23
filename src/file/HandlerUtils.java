@@ -51,17 +51,44 @@ public final class HandlerUtils {
     public String createMessage(String node_id, String operation){
         String message = "header:"+node_id+" body:";
         switch(operation){
-            case "joinreq":
+            case "joinReq":
                 message = message.concat(createJoinReqMessage(node_id));
                 break;
+            case "joinLog":
+                message = message.concat(createJoinLogsMessage(node_id));
+                break;
+            case "joinMember":
+                break;
+            case "leaveReq":
+                message = message.concat(createLeaveReqMessage(node_id));
+                break;
         }
+        return message;
+    }
+
+    public String createMessage(String node_id, String key, String value){
+        String message = "header:"+node_id+" body:"+key+"_"+value;
         return message;
     }
 
     public String createJoinReqMessage(String node_id){
         String node_key = Crypto.encodeValue(node_id);
         String node_counter = FileHandler.readFile("../global/"+node_key+"/membership/", "counter.txt");
-        String message = "joinreq_"+node_counter;
+        String message = "joinReq_"+node_counter;
+        return message;
+    }
+
+    public String createLeaveReqMessage(String node_id){
+        String node_key = Crypto.encodeValue(node_id);
+        String node_counter = FileHandler.readFile("../global/"+node_key+"/membership/", "counter.txt");
+        String message = "joinReq_"+node_counter;
+        return message;
+    }
+
+    public String createJoinLogsMessage(String node_id){
+        String node_key = Crypto.encodeValue(node_id);
+        String node_log = FileHandler.readFile("../global/"+node_key+"/membership/", "log.txt");
+        String message = "joinLogs_"+node_log;
         return message;
     }
 

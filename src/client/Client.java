@@ -38,12 +38,12 @@ public class Client {
                 case "put":
                     String value = args[2];
                     String hash_value = Crypto.encodeValue(value);
-                    FileHandler.createDirectory("/global", "/filesnode1");
-                    FileHandler.createDirectory("/global", "/filesnode1/membership");
-                    FileHandler.createDirectory("/global", "/filesnode1/storage");
-                    FileHandler.createFile("/global/filesnode1/storage", "/file1.txt");
-                    FileHandler.writeFile("/global", "/file1.txt", "olaxd");
-                    System.out.print(FileHandler.readFile("/global", "/file1.txt"));
+                    FileHandler.createDirectory("../global", "/filesnode1");
+                    FileHandler.createDirectory("../global", "/filesnode1/membership");
+                    FileHandler.createDirectory("../global", "/filesnode1/storage");
+                    FileHandler.createFile("../global/filesnode1/storage", "/file1.txt");
+                    FileHandler.writeFile("../global", "/file1.txt", "olaxd");
+                    System.out.print(FileHandler.readFile("../global", "/file1.txt"));
                     System.out.println("value: " + value + "\nhashed: " + hash_value);
                     break;
             }

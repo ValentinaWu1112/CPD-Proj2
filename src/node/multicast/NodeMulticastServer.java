@@ -3,6 +3,8 @@ package node.multicast;
 import java.io.*;
 import java.net.*;
 import java.lang.Thread;
+import java.util.LinkedList;
+import java.util.Queue;
 
 /* 
     Thread responsible for maintaing multicast connection up, joing/leaving
@@ -17,10 +19,12 @@ public class NodeMulticastServer extends Thread{
     private String raw_ip;
     private int multicast_port;
     private volatile int in_group = 0;
+    public volatile Queue<String> messages_queue;
 
     public NodeMulticastServer(String address, int port){
         this.raw_ip = address;
         this.multicast_port = port;
+        messages_queue = new LinkedList<>();
     }
 
     public int getInGroup(){
@@ -59,10 +63,12 @@ public class NodeMulticastServer extends Thread{
             while(true){
                 this.mcSocket.receive(packet);
                 if(in_group == 1){
-                    String msg = new String(this.packet.getData(), 
-                                            this.packet.getOffset(), 
-                                            this.packet.getLength());
-                    System.out.println("[Multicast]:" + msg);
+                    String msg = new String(
+                        this.packet.getData(), 
+                        this.packet.getOffset(), 
+                        this.packet.getLength()
+                    );
+                    messages_queue.add(msg);
                 }
             }
         } catch(Exception e){ 

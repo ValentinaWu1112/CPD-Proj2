@@ -19,7 +19,6 @@ public class Client {
 
     public static void main(String[] args) {
         try {
-            System.out.println("pathName: " + FileHandler.getPathName() );
             tcp_ip = args[0];
             operation = args[1];
             Registry registryRMIServerAPI = LocateRegistry.getRegistry(1090);

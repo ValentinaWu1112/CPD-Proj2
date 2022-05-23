@@ -7,6 +7,10 @@ import crypto.Crypto;
 import java.lang.Thread;
 import node.tcp.*;
 import node.multicast.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.Random;
 
 /* 
     While RMIServer thread is responsible for receiving nodes info (communication addresses),
@@ -55,6 +59,82 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
     private int multicast_port;
     private NodeMulticastClient nmc;
     private NodeMulticastServer nms;
+    ThreadPoolExecutor executor;
+
+    /* 
+        Task constituting the process of sending the 
+        current membership information to the joining node. 
+    */
+    class TaskMembershipInfoMessage implements Runnable{
+
+        public TaskMembershipInfoMessage(){
+
+        }
+
+        public void run(){
+            try {
+                Random rand = new Random();
+                TimeUnit.SECONDS.sleep(rand.nextInt(3));
+                nmc.sendMulticastMessage("working!");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /* 
+        Thread responsible for message scouting on Multicast and TCP servers.
+        Both Multicast and TCP servers have a queue structure that contains all
+        still unprocessed received messages. The job of this thread is to process 
+        and push those messages from the queue to the executor. The executor will 
+        then execute the task specified in the message.
+    */
+    class MessageScout extends Thread{
+        public MessageScout(){}
+
+        /* 
+            Assuming JOIN_REQUEST looks like:
+                join_request-id-counter
+            Assuming LEAVE_REQUEST looks like:
+                leave_request-id-counter
+        */
+
+        private void processMessage(String message){
+            String[] message_tokens = message.split(" ");
+
+            String[] message_header = message_tokens[0].split(":");
+            String[] message_body = message_tokens[1].split(":");
+
+            String[] body_content = message_body[1].split("_");
+            /* 
+                The node ignores its own messages
+            */
+            if(message_header[1].equals(node_key)){
+                return;
+            }
+
+            //To be changed..'join_request' to 'joinReq'
+            if(body_content[0].equals("joinreq")){
+                executor.execute(new TaskMembershipInfoMessage());
+            }
+            //else if(raw_message_type.equals("leave_request")){
+                /* 
+                    TODO: create task to update nodes membership based
+                    on this kind of message
+                */
+            //}
+            return;
+        }
+
+        public void run(){
+            while(true){
+                while(nms.messages_queue.size() > 0){
+                    String message = nms.messages_queue.remove();
+                    processMessage(message);
+                }
+            }
+        }
+    }
 
     public RMIServerBrain(String tcp_ip, int tcp_port, String multicast_ip, int multicast_port, String node_key){
         this.tcp_ip = tcp_ip;
@@ -62,6 +142,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
         this.multicast_ip = multicast_ip;
         this.multicast_port = multicast_port;
         this.node_key = node_key;
+        this.executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(4);
     }
 
     public boolean joinMulticastGroup(){
@@ -106,19 +187,19 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
             multicast messages format.
         */
         nmc.setInGroup(1);
-        nmc.sendMulticastMessage("message");
+        nmc.sendMulticastMessage("join_request-"+this.node_key+"-0");
         return true;
     }
 
     public boolean leaveMulticastGroup(){
         if(nms.getInGroup() == 0){
             System.err.println("Already out of group.");
-            return true;
+            return false;
         }
         System.out.println("leaveMulticastGroup");
         nmc.setInGroup(0);
         nms.leaveMulticastGroup();
-        return false;
+        return true;
     }
 
     public boolean getValue(String key){
@@ -146,5 +227,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
         */
         nms = new NodeMulticastServer(this.multicast_ip, this.multicast_port);
         nms.start();
+        MessageScout scout = new MessageScout();
+        scout.start();
     }
 }

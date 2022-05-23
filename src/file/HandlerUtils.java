@@ -1,5 +1,7 @@
 package file;
 import java.util.*;
+import java.util.LinkedList;
+import crypto.Crypto;
 
 public final class HandlerUtils {
     private HandlerUtils(){}
@@ -45,4 +47,27 @@ public final class HandlerUtils {
         }
         return sb.toString();
     }
+
+    public String createMessage(String node_id, String operation){
+        String message = "header:"+node_id+" body:";
+        switch(operation){
+            case "joinreq":
+                message = message.concat(createJoinReqMessage(node_id));
+                break;
+        }
+        return message;
+    }
+
+    public String createJoinReqMessage(String node_id){
+        String node_key = Crypto.encodeValue(node_id);
+        String node_counter = FileHandler.readFile("../global/"+node_key+"/membership/", "counter.txt");
+        String message = "joinreq_"+node_counter;
+        return message;
+    }
+
+    /* public LinkedList<String> loadClusterMembers(String node_key){
+        String raw_cluster_members = FileHandler.readFile("..global/"+node_key+"/membership/", "cluster_members.txt");
+        String[] cluster_members = raw_cluster_members.split("-");
+        return null;
+    } */
 }

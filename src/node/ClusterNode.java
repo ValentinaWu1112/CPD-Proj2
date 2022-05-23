@@ -39,6 +39,9 @@ class ClusterNodeBrain extends Thread{
             FileHandler.createDirectory("../global/", this.node_key);
             FileHandler.createDirectory("../global/" + this.node_key + "/", "membership");
             FileHandler.createDirectory("../global/" + this.node_key + "/", "storage");
+            FileHandler.createFile("../global/" + this.node_key + "/membership/", "cluster_members.txt");
+            FileHandler.createFile("../global/" + this.node_key + "/membership/", "log.txt");
+            FileHandler.createFile("../global/" + this.node_key + "/membership/", "counter.txt");
             return true;
         } catch (Exception e) {
             e.printStackTrace();

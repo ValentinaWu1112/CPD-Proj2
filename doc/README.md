@@ -32,7 +32,7 @@ Here, the header contains, separated by the ':' character, the issuer of the mes
 
 (Before sending the JOIN message, the new member starts accepting connections on a IP whose number it sends in its JOIN message)
 
-- joinReq_nodeId_counter (via multicast)
+- joinreq_counter (via multicast)
 
 (some of the cluster member will send the new member a MemberShip message) (via TCP)
 - joinMember_listMember

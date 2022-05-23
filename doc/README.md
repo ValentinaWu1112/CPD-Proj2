@@ -1,6 +1,12 @@
 # Project design decisions documentation (Report Helper)
 
-File system structure
+### Membership Protocol
+#### Cluster Members Format
+- The cluster members list will follow the specified format show bellow: <br/>
+    ``` node1ip-node2ip-...```<br/>
+Essentially, all node TCP addresses are delimited by the '-' character.
+
+### File system structure
 
 ```
 global/

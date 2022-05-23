@@ -23,18 +23,10 @@
 
     Create a node:
         .startadd 127.0.0.1
-        java -cp ".:../libs/json-20220320.jar" node/ClusterNode 224.0.0.1 6666 127.0.0.1 7999
+        java node/ClusterNode 224.0.0.1 6666 127.0.0.1 7999
 
     Interact with nodes: 
-        java -cp ".:../libs/json-20220320.jar" client/Client 127.0.0.1 join
-
-### How install the package org.json
-    - https://www.tutorialspoint.com/org_json/org_json_quick_guide.htm
-    - (no link cuidado com os espaços, no JAVA_HOME utilizar o comando de baixo)
-    - export JAVA_HOME=$(readlink -f /usr/bin/java | sed "s:/bin/java::")
-    - guardar todos os exports no ficheiro "~/.bashrc", para não correr sempre de novo
-    - se estão a utilizar o vscode podem exportar a biblioteca para o ide :
-       https://youtu.be/g6vvEEm2hhs
+        java client/Client 127.0.0.1 join
 
 #### Crypto class usage:
     - Crypto.encodeValue("value");

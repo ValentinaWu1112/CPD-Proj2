@@ -24,7 +24,7 @@ public final class FileHandler {
 
     public static boolean createFile(String path, String fileName){
         try {
-            File new_file = new File(pathName + "" + path + "" + fileName );
+            File new_file = new File(pathName + "/" + path + "" + fileName );
             if(!new_file.exists()){
                 new_file.createNewFile();
                 return true;
@@ -41,7 +41,7 @@ public final class FileHandler {
 
     public static boolean createDirectory(String path, String dirName){
         try {
-            File new_dir = new File(pathName + "" + path + "" + dirName);
+            File new_dir = new File(pathName + "/" + path + "" + dirName);
             if(!new_dir.exists()){
                 new_dir.mkdirs();
                 return true;
@@ -64,7 +64,7 @@ public final class FileHandler {
     public static boolean writeFile(String path, String name, String value){
         try {
 
-            FileWriter myWriter = new FileWriter(pathName + "" + path + "" + name  );
+            FileWriter myWriter = new FileWriter(pathName + "/" + path + "" + name  );
             myWriter.write(value);
             myWriter.close();
             return true;
@@ -75,7 +75,7 @@ public final class FileHandler {
     }
 
     public static String readFile(String path, String name){
-        try(BufferedReader br = new BufferedReader(new FileReader(pathName + "" + path + "" + name ))) {
+        try(BufferedReader br = new BufferedReader(new FileReader(pathName + "/" + path + "" + name ))) {
             StringBuilder sb = new StringBuilder();
             String line = br.readLine();
         
@@ -94,7 +94,7 @@ public final class FileHandler {
 
     public static boolean deleteDir(String path){
         try{
-            File eliminate = new File(pathName + "" + path);
+            File eliminate = new File(pathName + "/" + path);
             
             if(eliminate.exists()){
                 String[]entries = eliminate.list();
@@ -107,7 +107,6 @@ public final class FileHandler {
             return false;
             
         } catch (Exception e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
             return false;
         }

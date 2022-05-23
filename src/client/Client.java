@@ -39,7 +39,6 @@ public class Client {
                 case "put":
                     String value = args[2];
                     String hash_value = Crypto.encodeValue(value);
-                    FileHandler.createFile("/global", "/file1.txt");
                     FileHandler.createDirectory("/global", "/filesnode1");
                     FileHandler.createDirectory("/global", "/filesnode1/membership");
                     FileHandler.createDirectory("/global", "/filesnode1/storage");

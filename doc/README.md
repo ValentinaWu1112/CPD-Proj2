@@ -1,6 +1,6 @@
 # Project design decisions documentation (Report Helper)
 
-File system structure
+### File system structure
 
 ```
 global/
@@ -22,9 +22,14 @@ global/
         all information kept by every node following the above structure.
 
 
-Messages structure: 
+### Messages structure: 
+All messages will be encapsulated inside an universal wrap, used accross all kinds of messages:<br/>
 
-- JOIN:
+``` header:nodeId body:joinMessage ```<br/>
+
+Here, the header contains, separated by the ':' character, the issuer of the message (the Id of the node that is sending the message), then, separated by a space character '\0', is the body. Identically shaped compared to the header, the body contains the actual message content. This message content varies depending on the message type. These types are explained bellow..
+
+#### JOIN:
 
 (Before sending the JOIN message, the new member starts accepting connections on a IP whose number it sends in its JOIN message)
 
@@ -38,7 +43,7 @@ Messages structure:
 - joinValue_value
 
 
-- LEAVE:
+#### LEAVE:
 
 (before leaving the cluster, i.e. multicasting the LEAVE message, the node should transfer its key-value pairs to its successor.)
 - leaveValue_key_value (via ?) -> (estou confusa com o key e value)

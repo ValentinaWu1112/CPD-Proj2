@@ -80,6 +80,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
                 Random rand = new Random();
                 TimeUnit.SECONDS.sleep(rand.nextInt(3));
                 MembershipUtils.updateLog(tcp_ip, target_node_id.concat(" ").concat(counter).concat("\n"));
+                MembershipUtils.updateCluster(tcp_ip, target_node_id);
                 ntcpc = new NodeTCPClient(this.target_node_id, "7999");
                 ntcpc.start();
             } catch (Exception e) {

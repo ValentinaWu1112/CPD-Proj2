@@ -44,6 +44,27 @@ public final class MembershipUtils {
         
     }
 
+    public static boolean updateCluster(String node_id, String cluster){
+        String node_key = Crypto.encodeValue(node_id);
+        LinkedList <String> memberList = loadClusterMembers(node_key);
+        if(!memberList.contains(cluster)) memberList.add(cluster);
+        System.out.println("list: " + memberList);
+        String newList = storeClusterMembers(memberList);
+        return FileHandler.writeFile("../global/"+node_key+"/membership/", "cluster_members.txt", newList);
+
+    }
+
+    public static boolean updateRemoveCluster(String node_id, String cluster){
+        String node_key = Crypto.encodeValue(node_id);
+        LinkedList <String> memberList = loadClusterMembers(node_key);
+        System.out.println("list: " + memberList);
+        memberList.remove(cluster);
+        
+        String newList = storeClusterMembers(memberList);
+        return FileHandler.writeFile("../global/"+node_key+"/membership/", "cluster_members.txt", newList);
+
+    }
+
     public static Map<String,String> toMap (String log){
         if(log.equals("")) return new LinkedHashMap<String,String>();
         Map<String,String> ret = new LinkedHashMap<>();
@@ -119,13 +140,25 @@ public final class MembershipUtils {
     }
 
     public static LinkedList<String> loadClusterMembers(String node_key){
-        String raw_cluster_members = FileHandler.readFile("..global/"+node_key+"/membership/", "cluster_members.txt");
+        String raw_cluster_members = FileHandler.readFile("../global/"+node_key+"/membership/", "cluster_members.txt");
+        if(raw_cluster_members.equals("")) return new LinkedList<String>();
         String[] cluster_members_array = raw_cluster_members.split("-");
         LinkedList<String> cluster_members = new LinkedList<>();
         for(int i=0; i<cluster_members_array.length; i++){
+            System.out.println("member: " + cluster_members_array[i]);
             cluster_members.add(cluster_members_array[i]);
         }
+        Collections.sort(cluster_members);  
         return cluster_members;
+    }
+
+    public static String storeClusterMembers(LinkedList<String> cluster_members){
+        StringBuilder sb = new StringBuilder();
+        for(int i=0; i<cluster_members.size(); i++){
+            if(i!=0) sb.append("-");
+            sb.append(cluster_members.get(i).replace("\n", ""));
+        }
+        return sb.toString();
     }
 
     public static String getRawLogs(String node_key){

@@ -6,16 +6,20 @@
 global/
     node1_key/
         membership/
-            counter.txt
+            cluster_members.txt
             log.txt
+            counter.txt
         storage/
             file79_key.txt
+            ..
     node2_key/
         membership/
-            counter.txt
+            cluster_members.txt
             log.txt
+            counter.txt
         storage/
             file32_key.txt
+            ..
 ```
 
 Since demo is executed in a single computer, global directory contains all information kept by every node following the above structure.

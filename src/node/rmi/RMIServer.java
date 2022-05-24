@@ -185,7 +185,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
             multicast messages format.
         */
         nmc.setInGroup(1);
-        nmc.sendMulticastMessage(HandlerUtils.createMessage(this.tcp_ip, "joinReq"));
+        nmc.sendMulticastMessage(MembershipUtils.createMessage(this.tcp_ip, "joinReq"));
         return true;
     }
 

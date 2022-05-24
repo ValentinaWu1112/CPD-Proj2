@@ -3,8 +3,8 @@ import java.util.*;
 import java.util.LinkedList;
 import crypto.Crypto;
 
-public final class HandlerUtils {
-    private HandlerUtils(){}
+public final class MembershipUtils {
+    private MembershipUtils(){}
 
     public static String updateCounter(String counter){
         int ret = Integer.parseInt(counter);

@@ -48,16 +48,17 @@ public final class HandlerUtils {
         return sb.toString();
     }
 
-    public String createMessage(String node_id, String operation){
+    public static String createMessage(String node_id, String operation){
         String message = "header:"+node_id+" body:";
         switch(operation){
             case "joinReq":
                 message = message.concat(createJoinReqMessage(node_id));
                 break;
-            case "joinLog":
-                message = message.concat(createJoinLogsMessage(node_id));
+            case "memshipInfo":
+                message = message.concat(createMembershipInfoMessage(node_id));
                 break;
-            case "joinMember":
+            case "storeKeyValue":
+                message = message.concat(createStoreKeyValueMessage(node_id));
                 break;
             case "leaveReq":
                 message = message.concat(createLeaveReqMessage(node_id));
@@ -66,35 +67,63 @@ public final class HandlerUtils {
         return message;
     }
 
-    public String createMessage(String node_id, String key, String value){
-        String message = "header:"+node_id+" body:"+key+"_"+value;
-        return message;
-    }
-
-    public String createJoinReqMessage(String node_id){
+    public static String createJoinReqMessage(String node_id){
         String node_key = Crypto.encodeValue(node_id);
         String node_counter = FileHandler.readFile("../global/"+node_key+"/membership/", "counter.txt");
         String message = "joinReq_"+node_counter;
         return message;
     }
 
-    public String createLeaveReqMessage(String node_id){
+    public static String createMembershipInfoMessage(String node_id){
+        String node_key = Crypto.encodeValue(node_id);
+        String cluster_members = getRawClusterMembers(node_key);
+        String logs = getRawLogs(node_key);
+        String message = "memshipInfo_"+cluster_members+"_"+logs;
+        return message;
+    }
+
+    public static String createStoreKeyValueMessage(String node_id){
+        String node_key = Crypto.encodeValue(node_id);
+        String cluster_members = getRawKeyValues(node_key);
+        String logs = getRawLogs(node_key);
+        String message = "memshipInfo_"+cluster_members+"_"+logs;
+        return message;
+    }
+
+    public static String createLeaveReqMessage(String node_id){
         String node_key = Crypto.encodeValue(node_id);
         String node_counter = FileHandler.readFile("../global/"+node_key+"/membership/", "counter.txt");
         String message = "joinReq_"+node_counter;
         return message;
     }
 
-    public String createJoinLogsMessage(String node_id){
-        String node_key = Crypto.encodeValue(node_id);
-        String node_log = FileHandler.readFile("../global/"+node_key+"/membership/", "log.txt");
-        String message = "joinLogs_"+node_log;
-        return message;
+    public static String getRawClusterMembers(String node_key){
+        String raw_cluster_members = FileHandler.readFile("../global/"+node_key+"/membership/", "cluster_members.txt");
+        return raw_cluster_members;
     }
 
-    /* public LinkedList<String> loadClusterMembers(String node_key){
+    public static LinkedList<String> loadClusterMembers(String node_key){
         String raw_cluster_members = FileHandler.readFile("..global/"+node_key+"/membership/", "cluster_members.txt");
-        String[] cluster_members = raw_cluster_members.split("-");
-        return null;
-    } */
+        String[] cluster_members_array = raw_cluster_members.split("-");
+        LinkedList<String> cluster_members = new LinkedList<>();
+        for(int i=0; i<cluster_members_array.length; i++){
+            cluster_members.add(cluster_members_array[i]);
+        }
+        return cluster_members;
+    }
+
+    public static String getRawLogs(String node_key){
+        String raw_logs = FileHandler.readFile("../global/"+node_key+"/membership/", "log.txt");
+        return raw_logs;
+    }
+
+    public static String getRawKeyValues(String node_key){
+        String key_values = "";
+        LinkedList<String> files = FileHandler.getDirectoryFiles("../global"+ node_key + "/", "storage");
+        for(String file : files){
+            String value = FileHandler.readFile("../global/"+node_key+"/storage/", file+".txt");
+            key_values = key_values.concat(file+"+"+value);
+        }
+        return key_values;
+    }
 }

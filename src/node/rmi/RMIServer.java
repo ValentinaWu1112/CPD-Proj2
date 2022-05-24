@@ -66,17 +66,20 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
         Task constituting the process of sending the 
         current membership information to the joining node. 
     */
-    class TaskMembershipInfoMessage implements Runnable{
+    class TaskJoinReq implements Runnable{
         private String target_node_id;
+        private String counter;
 
-        public TaskMembershipInfoMessage(String target_node_id){
+        public TaskJoinReq(String target_node_id, String counter){
             this.target_node_id = target_node_id;
+            this.counter = counter;
         }
 
         public void run(){
             try {
                 Random rand = new Random();
                 TimeUnit.SECONDS.sleep(rand.nextInt(3));
+                MembershipUtils.updateLog(tcp_ip, target_node_id.concat(" ").concat(counter).concat("\n"));
                 ntcpc = new NodeTCPClient(this.target_node_id, "7999");
                 ntcpc.start();
             } catch (Exception e) {
@@ -116,12 +119,10 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
             }
             //To be changed..'join_request' to 'joinReq'
             if(body_content[0].equals("joinReq")){
-                executor.execute(new TaskMembershipInfoMessage(message_header[1]));
-                MembershipUtils.updateLog(this.tcp_ip, message_header[1].concat(" ").concat(body_content[1]).concat("\n"));
+                executor.execute(new TaskJoinReq(message_header[1], body_content[1]));
             }
             else if(body_content[0].equals("leaveReq")){
-                executor.execute(new TaskMembershipInfoMessage(message_header[1]));
-                MembershipUtils.updateLog(this.tcp_ip, message_header[1].concat(" ").concat(body_content[1]).concat("\n")); 
+                //TODO: Create task for this and execute it
             }
             //else if(raw_message_type.equals("leave_request")){
                 /* 

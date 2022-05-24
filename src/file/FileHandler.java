@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.FileReader;
 import java.io.BufferedReader;
+import java.util.LinkedList;
 
 /* 
     Static class meant to ease file/directory manipulation.
@@ -110,6 +111,22 @@ public final class FileHandler {
             e.printStackTrace();
             return false;
         }
+    }
+
+    public static LinkedList<String> getDirectoryFiles(String path, String dir_name){
+        File dir = new File(pathName + "/" + path + "" + dir_name);
+        if(!dir.isDirectory()){
+            System.err.println("Not a directory");
+            return null;
+        }
+        LinkedList<String> dir_file_names = new LinkedList<>();
+        File[] dir_files = dir.listFiles();
+        for (File file : dir_files) {
+            if (!file.isDirectory()) {
+                dir_file_names.add(file.getName());
+            }
+        }
+        return dir_file_names;
     }
 
     public static void deleteDirRec(String[] entries, String path){

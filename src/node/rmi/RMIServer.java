@@ -11,6 +11,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.Random;
+import file.*;
 
 /* 
     While RMIServer thread is responsible for receiving nodes info (communication addresses),
@@ -66,16 +67,18 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
         current membership information to the joining node. 
     */
     class TaskMembershipInfoMessage implements Runnable{
+        private String target_node_id;
 
-        public TaskMembershipInfoMessage(){
-
+        public TaskMembershipInfoMessage(String target_node_id){
+            this.target_node_id = target_node_id;
         }
 
         public void run(){
             try {
                 Random rand = new Random();
                 TimeUnit.SECONDS.sleep(rand.nextInt(3));
-                nmc.sendMulticastMessage("working!");
+                ntcpc = new NodeTCPClient(this.target_node_id, "7999");
+                ntcpc.start();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -90,32 +93,35 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
         then execute the task specified in the message.
     */
     class MessageScout extends Thread{
-        public MessageScout(){}
-
-        /* 
-            Assuming JOIN_REQUEST looks like:
-                join_request-id-counter
-            Assuming LEAVE_REQUEST looks like:
-                leave_request-id-counter
-        */
+        String tcp_ip;
+        public MessageScout(String tcp_ip){
+            this.tcp_ip = tcp_ip;
+        }
 
         private void processMessage(String message){
             String[] message_tokens = message.split(" ");
-
             String[] message_header = message_tokens[0].split(":");
             String[] message_body = message_tokens[1].split(":");
-
             String[] body_content = message_body[1].split("_");
-            /* 
+            /*
                 The node ignores its own messages
             */
-            if(message_header[1].equals(node_key)){
+            if(message_header[1].equals(tcp_ip)){
                 return;
             }
 
+            System.out.println("BODY CONTENT:");
+            for(String a : body_content){
+                System.err.println(a);
+            }
             //To be changed..'join_request' to 'joinReq'
-            if(body_content[0].equals("joinreq")){
-                executor.execute(new TaskMembershipInfoMessage());
+            if(body_content[0].equals("joinReq")){
+                executor.execute(new TaskMembershipInfoMessage(message_header[1]));
+                MembershipUtils.updateLog(this.tcp_ip, message_header[1].concat(" ").concat(body_content[1]).concat("\n"));
+            }
+            else if(body_content[0].equals("leaveReq")){
+                executor.execute(new TaskMembershipInfoMessage(message_header[1]));
+                MembershipUtils.updateLog(this.tcp_ip, message_header[1].concat(" ").concat(body_content[1]).concat("\n")); 
             }
             //else if(raw_message_type.equals("leave_request")){
                 /* 
@@ -187,7 +193,8 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
             multicast messages format.
         */
         nmc.setInGroup(1);
-        nmc.sendMulticastMessage("join_request-"+this.node_key+"-0");
+        MembershipUtils.updateCounter(this.tcp_ip);
+        nmc.sendMulticastMessage(MembershipUtils.createMessage(this.tcp_ip, "joinReq")); 
         return true;
     }
 
@@ -197,6 +204,8 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
             return false;
         }
         System.out.println("leaveMulticastGroup");
+        MembershipUtils.updateCounter(this.tcp_ip);
+        nmc.sendMulticastMessage(MembershipUtils.createMessage(this.tcp_ip, "leaveReq"));
         nmc.setInGroup(0);
         nms.leaveMulticastGroup();
         return true;
@@ -227,7 +236,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
         */
         nms = new NodeMulticastServer(this.multicast_ip, this.multicast_port);
         nms.start();
-        MessageScout scout = new MessageScout();
+        MessageScout scout = new MessageScout(this.tcp_ip);
         scout.start();
     }
 }

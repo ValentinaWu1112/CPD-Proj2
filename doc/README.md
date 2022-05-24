@@ -28,27 +28,16 @@ All messages will be encapsulated inside an universal wrap, used accross all kin
 
 Here, the header contains, separated by the ':' character, the issuer of the message (the Id of the node that is sending the message), then, separated by a space character '\0', is the body. Identically shaped compared to the header, the body contains the actual message content. This message content varies depending on the message type. These types are explained bellow..
 
-#### JOIN:
+### Message Types:
 
-(Before sending the JOIN message, the new member starts accepting connections on a IP whose number it sends in its JOIN message)
+#### JoinReq Message (the message the node broadcasts when it joins) [UDP]
+- joinReq_counter
 
-- joinreq_counter (via multicast)
+#### Membership Information Message (the message a node sends to the joining node / the message one cluster node broadcasts every second) [TCP & UDP]
+- memshipInfo_nodeid1-nodeid2_nodeid counter\nnodeid2 counter
 
-(some of the cluster member will send the new member a MemberShip message) (via TCP)
-- joinMember_listMember
-- joinLogs_logs
+#### LeaveReq Message (the message the node broadcasts when it leaves) [UDP]
+- leaveReq_counter
 
-(send storage values after a join) (via  ?)
-- joinValue_value
-
-
-#### LEAVE:
-
-(before leaving the cluster, i.e. multicasting the LEAVE message, the node should transfer its key-value pairs to its successor.)
-- leaveValue_key_value (via ?) -> (estou confusa com o key e value)
-
-- leaveReq_nodeId_counter (via ?)
-
-
-- PUT:
-- putReq_key_value (via ?)
+#### StoreKeyValue Message (the message a node sends to other node containing key-values) [TCP]
+- storeKeyValue_key1+value1-key2+value2

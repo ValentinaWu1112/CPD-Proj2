@@ -32,23 +32,23 @@ Here, the header contains, separated by the ':' character, the issuer of the mes
 
 (Before sending the JOIN message, the new member starts accepting connections on a IP whose number it sends in its JOIN message)
 
-- joinreq_counter (via multicast)
+- joinReq_counter (via multicast)
 
 (some of the cluster member will send the new member a MemberShip message) (via TCP)
 - joinMember_listMember
 - joinLogs_logs
 
-(send storage values after a join) (via  ?)
-- joinValue_value
+(send storage values after a join) (via  TCP)
+- key_value
 
 
 #### LEAVE:
 
 (before leaving the cluster, i.e. multicasting the LEAVE message, the node should transfer its key-value pairs to its successor.)
-- leaveValue_key_value (via ?) -> (estou confusa com o key e value)
+- key_value (via TCP) -> (key = hash(value))
 
-- leaveReq_nodeId_counter (via ?)
+- leaveReq_counter (via multicast)
 
 
-- PUT:
-- putReq_key_value (via ?)
+#### PUT:
+- key_value (via TCP)

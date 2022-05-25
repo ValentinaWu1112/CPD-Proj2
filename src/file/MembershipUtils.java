@@ -21,7 +21,7 @@ public final class MembershipUtils {
     }
 
     public static boolean updateLog(String node_id, String newLog){
-        /*node_id counter*/
+        /*node_id-counter;*/
         String node_key = Crypto.encodeValue(node_id);
         String log = getRawLogs(node_key);
         Map <String,String> logs = toMap(log);
@@ -74,8 +74,11 @@ public final class MembershipUtils {
 
     public static String MaptoString(Map <String,String> logs){
         StringBuilder sb = new StringBuilder();
+        int i=0;
         for (Map.Entry<String,String> entry : logs.entrySet()) {
-            sb.append(entry.getKey() + "-" + entry.getValue() + ";");
+            if(i!=0) sb.append(";");
+            sb.append(entry.getKey() + "-" + entry.getValue());
+            i++;
         }
         return sb.toString();
     }
@@ -171,6 +174,7 @@ public final class MembershipUtils {
     public static String getRawKeyValues(String node_key){
         String key_values = "";
         LinkedList<String> files = FileHandler.getDirectoryFiles("../global"+ node_key + "/", "storage");
+        
         for(String file : files){
             String value = FileHandler.readFile("../global/"+node_key+"/storage/", file+".txt");
             key_values = key_values.concat(file+"+"+value);

@@ -92,6 +92,31 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
         }
     }
 
+    class TaskLeaveReq implements Runnable{
+        private String target_node_id;
+        private String counter;
+
+        public TaskLeaveReq(String target_node_id, String counter){
+            this.target_node_id = target_node_id;
+            this.counter = counter;
+        }
+
+        public void run(){
+            try {
+                Random rand = new Random();
+                TimeUnit.SECONDS.sleep(rand.nextInt(3));
+                MembershipUtils.updateLog(tcp_ip, target_node_id.concat("-").concat(counter).concat(";"));
+                MembershipUtils.updateRemoveCluster(tcp_ip, target_node_id);
+                ntcpc = new NodeTCPClient(this.target_node_id, "7999");
+                ntcpc.start();
+                System.out.println("sending memship info..");
+                ntcpc.sendTCPMessage(MembershipUtils.createMessage(tcp_ip, "memshipInfo"));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     /* 
         Task constituting the process of receiving a 
         message containing the membership information and
@@ -145,7 +170,8 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
                 }
             }
             else if(body_content[0].equals("leaveReq")){
-                //TODO: create task to update nodes membership
+                last_joining_nodeid = message_header[1];
+                executor.execute(new TaskLeaveReq(message_header[1], body_content[1]));
             }
             else if(body_content[0].equals("memshipInfo")){
                 executor.execute(new TaskMemshipInfo(message_header[1]));
@@ -228,9 +254,9 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
             System.err.println("Already out of group.");
             return false;
         }
-        System.out.println("leaveMulticastGroup");
         MembershipUtils.updateCounter(this.tcp_ip);
         nmc.sendMulticastMessage(MembershipUtils.createMessage(this.tcp_ip, "leaveReq"));
+        System.out.println("leaveMulticastGroup");
         nmc.setInGroup(0);
         nms.leaveMulticastGroup();
         return true;

@@ -127,18 +127,13 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
     */
     class TaskMemshipInfo implements Runnable{
         private String target_node_id;
-        private String raw_cluster_members;
-        private String raw_logs;
 
-        public TaskMemshipInfo(String target_node_id, String raw_cluster_members, String raw_logs){
+        public TaskMemshipInfo(String target_node_id){
             this.target_node_id = target_node_id;
-            this.raw_cluster_members = raw_cluster_members;
-            this.raw_logs = raw_logs;
         }
 
         public void run(){
             try {
-
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -178,14 +173,10 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
                 }
             }
             else if(body_content[0].equals("leaveReq")){
-                last_joining_nodeid = message_header[1];
                 executor.execute(new TaskLeaveReq(message_header[1], body_content[1]));
             }
             else if(body_content[0].equals("memshipInfo")){
-                executor.execute(new TaskMemshipInfo(message_header[1], body_content[1], body_content[2]));
-            }
-            else if(body_content[0].equals("storeKeyValue")){
-                
+                executor.execute(new TaskMemshipInfo(message_header[1]));
             }
             return;
         }

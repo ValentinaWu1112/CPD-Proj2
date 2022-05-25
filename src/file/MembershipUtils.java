@@ -23,12 +23,11 @@ public final class MembershipUtils {
     public static boolean updateLog(String node_id, String newLog){
         /*node_id counter*/
         String node_key = Crypto.encodeValue(node_id);
-        String log = FileHandler.readFile("../global/"+node_key+"/membership/", "log.txt");
+        String log = getRawLogs(node_key);
         Map <String,String> logs = toMap(log);
         Map <String,String> newLogs = toMap(newLog);
 
         for (Map.Entry<String,String> entry : newLogs.entrySet()) {
-            //System.out.println("Key: " + entry.getKey() + ". Value: " + entry.getValue());
             if(logs.containsKey(entry.getKey())){
                 if(Integer.parseInt(entry.getValue()) > Integer.parseInt(logs.get(entry.getKey()))){
                     logs.remove(entry.getKey());
@@ -45,7 +44,7 @@ public final class MembershipUtils {
         String node_key = Crypto.encodeValue(node_id);
         LinkedList <String> memberList = loadClusterMembers(node_key);
         if(!memberList.contains(cluster)) memberList.add(cluster);
-        System.out.println("list: " + memberList);
+        //System.out.println("list: " + memberList);
         String newList = storeClusterMembers(memberList);
         return FileHandler.writeFile("../global/"+node_key+"/membership/", "cluster_members.txt", newList);
     }
@@ -53,7 +52,7 @@ public final class MembershipUtils {
     public static boolean updateRemoveCluster(String node_id, String cluster){
         String node_key = Crypto.encodeValue(node_id);
         LinkedList <String> memberList = loadClusterMembers(node_key);
-        System.out.println("list: " + memberList);
+        //System.out.println("list: " + memberList);
         memberList.remove(cluster);
         
         String newList = storeClusterMembers(memberList);
@@ -61,7 +60,9 @@ public final class MembershipUtils {
     }
 
     public static Map<String,String> toMap (String log){
-        if(log.equals("")) return new LinkedHashMap<String,String>();
+        if(log.length() == 0) {
+            return new LinkedHashMap<String,String>();
+        }
         Map<String,String> ret = new LinkedHashMap<>();
         String[] logs = log.split(";");
         for(String l: logs){
@@ -74,7 +75,7 @@ public final class MembershipUtils {
     public static String MaptoString(Map <String,String> logs){
         StringBuilder sb = new StringBuilder();
         for (Map.Entry<String,String> entry : logs.entrySet()) {
-            sb.append(entry.getKey() + " " + entry.getValue() + "\n");
+            sb.append(entry.getKey() + "-" + entry.getValue() + ";");
         }
         return sb.toString();
     }
@@ -141,7 +142,7 @@ public final class MembershipUtils {
         String[] cluster_members_array = raw_cluster_members.split("-");
         LinkedList<String> cluster_members = new LinkedList<>();
         for(int i=0; i<cluster_members_array.length; i++){
-            System.out.println("member: " + cluster_members_array[i]);
+            //System.out.println("member: " + cluster_members_array[i]);
             cluster_members.add(cluster_members_array[i]);
         }
         Collections.sort(cluster_members);  

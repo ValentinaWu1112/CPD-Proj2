@@ -86,8 +86,7 @@ public final class FileHandler {
                 line = br.readLine();
             }
             String everything = sb.toString();
-            everything.replace("\n", "");
-            return everything;
+            return everything.replace("\n", "");
         } catch(Exception e){
             e.printStackTrace();
             return null;

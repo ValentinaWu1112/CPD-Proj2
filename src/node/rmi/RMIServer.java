@@ -60,7 +60,8 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
     private int multicast_port;
     private NodeMulticastClient nmc;
     private NodeMulticastServer nms;
-    ThreadPoolExecutor executor;
+    private ThreadPoolExecutor executor;
+    private String last_joining_nodeid;
 
     /* 
         Task constituting the process of sending the 
@@ -83,6 +84,28 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
                 MembershipUtils.updateCluster(tcp_ip, target_node_id);
                 ntcpc = new NodeTCPClient(this.target_node_id, "7999");
                 ntcpc.start();
+                System.out.println("sending memship info..");
+                ntcpc.sendTCPMessage(MembershipUtils.createMessage(tcp_ip, "memshipInfo"));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /* 
+        Task constituting the process of receiving a 
+        message containing the membership information and
+        update the nodes view of the cluster.. 
+    */
+    class TaskMemshipInfo implements Runnable{
+        private String target_node_id;
+
+        public TaskMemshipInfo(String target_node_id){
+            this.target_node_id = target_node_id;
+        }
+
+        public void run(){
+            try {
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -113,31 +136,31 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
             if(message_header[1].equals(tcp_ip)){
                 return;
             }
-
-            System.out.println("BODY CONTENT:");
-            for(String a : body_content){
-                System.err.println(a);
-            }
+            System.out.println("RECEIVED: " + message);
             //To be changed..'join_request' to 'joinReq'
             if(body_content[0].equals("joinReq")){
-                executor.execute(new TaskJoinReq(message_header[1], body_content[1]));
+                if(last_joining_nodeid == null || !last_joining_nodeid.equals(message_header[1])){
+                    last_joining_nodeid = message_header[1];
+                    executor.execute(new TaskJoinReq(message_header[1], body_content[1]));
+                }
             }
             else if(body_content[0].equals("leaveReq")){
-                //TODO: Create task for this and execute it
+                //TODO: create task to update nodes membership
             }
-            //else if(raw_message_type.equals("leave_request")){
-                /* 
-                    TODO: create task to update nodes membership based
-                    on this kind of message
-                */
-            //}
+            else if(body_content[0].equals("memshipInfo")){
+                executor.execute(new TaskMemshipInfo(message_header[1]));
+            }
             return;
         }
 
         public void run(){
             while(true){
-                while(nms.messages_queue.size() > 0){
+                while(nms != null && nms.messages_queue.size() > 0){
                     String message = nms.messages_queue.remove();
+                    processMessage(message);
+                }
+                while(ntcps != null && ntcps.messages_queue.size() > 0){
+                    String message = ntcps.messages_queue.remove();
                     processMessage(message);
                 }
             }

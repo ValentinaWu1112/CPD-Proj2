@@ -3,6 +3,7 @@ package node.tcp;
 import java.io.*;
 import java.net.*;
 import java.lang.Thread;
+import java.util.concurrent.TimeUnit;
 
 /* 
     Thread responsible for TCP 'client side', i.e, starting TCP connections, sending messages and
@@ -12,7 +13,7 @@ import java.lang.Thread;
 public class NodeTCPClient extends Thread{
     private String ip_target;
     private int port_target;
-    private DataOutputStream out;
+    private volatile DataOutputStream out;
     private DataInputStream input_server;
     private Socket socket;
 
@@ -23,7 +24,18 @@ public class NodeTCPClient extends Thread{
 
     public boolean sendTCPMessage(String message){
         try{
+            while(!this.getTCPOutSocket()){}
+            System.err.println("out: " + out);
             this.out.writeUTF(message);
+            try {
+                //1sec sleep so it guarantees the message was sent
+                TimeUnit.SECONDS.sleep(1);
+                
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            System.err.println("CLOSING..");
+            this.closeTCPConnection();
             return true;
         }
         catch(IOException e){
@@ -32,8 +44,13 @@ public class NodeTCPClient extends Thread{
         }
     }
 
+    public boolean getTCPOutSocket(){
+        return out == null ? false : true;
+    }
+
     public boolean closeTCPConnection(){
         try{
+            System.err.println("out: " + this.out);
             out.close();
             socket.close();
             System.out.println("Connection closed");

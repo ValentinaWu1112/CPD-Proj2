@@ -51,7 +51,6 @@ public final class MembershipUtils {
         System.out.println("list: " + memberList);
         String newList = storeClusterMembers(memberList);
         return FileHandler.writeFile("../global/"+node_key+"/membership/", "cluster_members.txt", newList);
-
     }
 
     public static boolean updateRemoveCluster(String node_id, String cluster){
@@ -62,7 +61,6 @@ public final class MembershipUtils {
         
         String newList = storeClusterMembers(memberList);
         return FileHandler.writeFile("../global/"+node_key+"/membership/", "cluster_members.txt", newList);
-
     }
 
     public static Map<String,String> toMap (String log){
@@ -116,6 +114,7 @@ public final class MembershipUtils {
         String cluster_members = getRawClusterMembers(node_key);
         String logs = getRawLogs(node_key);
         String message = "memshipInfo_"+cluster_members+"_"+logs;
+        System.err.println("memshipInfo: " + message);
         return message;
     }
 
@@ -140,7 +139,7 @@ public final class MembershipUtils {
     }
 
     public static LinkedList<String> loadClusterMembers(String node_key){
-        String raw_cluster_members = FileHandler.readFile("../global/"+node_key+"/membership/", "cluster_members.txt");
+        String raw_cluster_members = getRawClusterMembers(node_key);
         if(raw_cluster_members.equals("")) return new LinkedList<String>();
         String[] cluster_members_array = raw_cluster_members.split("-");
         LinkedList<String> cluster_members = new LinkedList<>();

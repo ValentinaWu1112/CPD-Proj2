@@ -3,6 +3,8 @@ package node.tcp;
 import java.io.*;
 import java.net.*;
 import java.lang.Thread;
+import java.util.LinkedList;
+import java.util.Queue;
 
 /* 
     Thread responsible for TCP 'server side', i.e, listens for connections and receives messages..
@@ -16,6 +18,7 @@ public class NodeTCPServer extends Thread{
     private ServerSocket server = null;
     private DataInputStream in =  null;
     private DataOutputStream out = null;
+    public volatile Queue<String> messages_queue;
 
     public boolean sendTCPMessage(String message){
         try{
@@ -31,6 +34,7 @@ public class NodeTCPServer extends Thread{
     public NodeTCPServer(String ip, int port){
         this.raw_ip = ip;
         this.port = port;
+        messages_queue = new LinkedList<>();
     }
 
     public void run(){
@@ -49,10 +53,12 @@ public class NodeTCPServer extends Thread{
                 while (!tcp_message.equals("close")){
                     try{
                         tcp_message = in.readUTF();
+                        messages_queue.add(tcp_message);
                         System.out.println("[TCP]: " + tcp_message);
                     }
-                    catch(IOException i){
-                        System.out.println(i);
+                    catch(Exception e){
+                        e.printStackTrace();
+                        break;
                     }
                 }
 

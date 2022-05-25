@@ -40,7 +40,6 @@ public class NodeTCPClient extends Thread{
 
     public boolean closeTCPConnection(){
         try{
-            System.err.println("out: " + this.out);
             out.close();
             socket.close();
             System.out.println("Connection closed");
@@ -64,7 +63,6 @@ public class NodeTCPClient extends Thread{
             while (!socket.isClosed()){
                 try{
                     tcp_message = input_server.readUTF();
-                    System.out.println("[TCP]: " + tcp_message);
                 }
                 catch(IOException i){
                     System.out.println(i);

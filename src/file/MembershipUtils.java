@@ -8,14 +8,11 @@ public final class MembershipUtils {
 
     public static boolean updateCounter(String node_id){
         String node_key = Crypto.encodeValue(node_id);
-        String counter = FileHandler.readFile("../global/"+node_key+"/membership/", "counter.txt");
+        String counter = getRawCounter(node_key);
         
         int ret = 0;
         if(counter.equals("")) ret = 0;
         else {
-            if(counter.indexOf("\n")!=-1) {
-                counter = counter.replace("\n","");
-            }
             ret = Integer.parseInt(counter);
             ret++;
         }
@@ -66,9 +63,9 @@ public final class MembershipUtils {
     public static Map<String,String> toMap (String log){
         if(log.equals("")) return new LinkedHashMap<String,String>();
         Map<String,String> ret = new LinkedHashMap<>();
-        String[] logs = log.split("\n");
+        String[] logs = log.split(";");
         for(String l: logs){
-            String[] tmp = l.split(" ");
+            String[] tmp = l.split("-");
             ret.put(tmp[0],tmp[1]);
         }
         return ret;
@@ -155,13 +152,18 @@ public final class MembershipUtils {
         StringBuilder sb = new StringBuilder();
         for(int i=0; i<cluster_members.size(); i++){
             if(i!=0) sb.append("-");
-            sb.append(cluster_members.get(i).replace("\n", ""));
+            sb.append(cluster_members.get(i));
         }
         return sb.toString();
     }
 
     public static String getRawLogs(String node_key){
         String raw_logs = FileHandler.readFile("../global/"+node_key+"/membership/", "log.txt");
+        return raw_logs;
+    }
+
+    public static String getRawCounter(String node_key){
+        String raw_logs = FileHandler.readFile("../global/"+node_key+"/membership/", "counter.txt");
         return raw_logs;
     }
 

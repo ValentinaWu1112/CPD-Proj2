@@ -38,14 +38,8 @@ Here, the header contains, separated by the ':' character, the issuer of the mes
 #### JoinReq Message (the message the node broadcasts when it joins) [UDP]
 ``` joinReq_counter ```
 
-#### joinLogs Message (the event logs) [TCP]
-``` joinLogs_logs ```
-
-##### logs
-``` nodeId1 counter1\nnodeId2 counter2\n ```
-
-#### Membership Information Message (the message a node sends to the joining node / the message one cluster node broadcasts every second) [TCP & UDP]
-``` memshipInfo_nodeid1-nodeid2_nodeid counter\nnodeid2 counter ```
+#### Membership Information Message (the message a node sends to the joining node / the message one cluster node broadcasts every second) [TCP & UDP] 
+``` memshipInfo_nodeid1-nodeid2_nodeid1-counter1;nodeid2-counter2; ```
 
 #### LeaveReq Message (the message the node broadcasts when it leaves) [UDP]
 ``` leaveReq_counter ```

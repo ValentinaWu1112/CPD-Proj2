@@ -6,6 +6,33 @@ import crypto.Crypto;
 public final class MembershipUtils {
     private MembershipUtils(){}
 
+    /* 
+        Returns node that is responsible for some other node keys.
+    */
+    public static String getResponsibleNode(String node_id){
+        String node_key = Crypto.encodeValue(node_id);
+        LinkedList<String> members = loadClusterMembers(node_key);
+        LinkedList<String> hashed_members_list = loadClusterMembers(node_key);
+        TreeMap<String,String> hashed_members = new TreeMap<>();
+        for(String member : members){
+            String hashed_member = Crypto.encodeValue(member);
+            hashed_members_list.add(hashed_member);
+            hashed_members.put(hashed_member, member);
+        }
+        boolean flag = false;
+        String respondible_node_id = null;
+        for(String hm : hashed_members_list) {
+            if(flag){
+                respondible_node_id =  hashed_members.get(hm);
+            }
+            if(hm.equals(node_key)){
+                flag = true;
+            }
+        }
+        if(respondible_node_id == null) respondible_node_id = hashed_members.get(hashed_members_list.get(0));
+        return respondible_node_id;
+    }
+
     public static boolean updateCounter(String node_id){
         String node_key = Crypto.encodeValue(node_id);
         String counter = getRawCounter(node_key);
@@ -174,10 +201,12 @@ public final class MembershipUtils {
     public static String getRawKeyValues(String node_key){
         String key_values = "";
         LinkedList<String> files = FileHandler.getDirectoryFiles("../global"+ node_key + "/", "storage");
-        
+        int i=0;
         for(String file : files){
             String value = FileHandler.readFile("../global/"+node_key+"/storage/", file+".txt");
+            if(i != 0) key_values = key_values.concat("-");
             key_values = key_values.concat(file+"+"+value);
+            i++;
         }
         return key_values;
     }

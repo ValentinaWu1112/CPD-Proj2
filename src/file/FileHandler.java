@@ -64,7 +64,6 @@ public final class FileHandler {
     */
     public static boolean writeFile(String path, String name, String value){
         try {
-
             FileWriter myWriter = new FileWriter(pathName + "/" + path + "" + name  );
             myWriter.write(value);
             myWriter.close();

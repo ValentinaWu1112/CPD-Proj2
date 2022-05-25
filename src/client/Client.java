@@ -36,9 +36,8 @@ public class Client {
                     System.out.println("leavemc: " + verdict);
                     break;
                 case "put":
-                    String value = args[2];
-                    String hash_value = Crypto.encodeValue(value);
-                    System.out.println("value: " + value + "\nhashed: " + hash_value);
+                    String path_file = args[2];
+                    
                     break;
             }
             //response = stubRMIServerAPI.leaveMulticastGroup();

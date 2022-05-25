@@ -54,7 +54,6 @@ public class NodeTCPServer extends Thread{
                     try{
                         tcp_message = in.readUTF();
                         messages_queue.add(tcp_message);
-                        System.out.println("[TCP]: " + tcp_message);
                     }
                     catch(Exception e){
                         e.printStackTrace();

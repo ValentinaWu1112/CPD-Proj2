@@ -25,17 +25,7 @@ public class NodeTCPClient extends Thread{
     public boolean sendTCPMessage(String message){
         try{
             while(!this.getTCPOutSocket()){}
-            System.err.println("out: " + out);
             this.out.writeUTF(message);
-            try {
-                //1sec sleep so it guarantees the message was sent
-                TimeUnit.SECONDS.sleep(1);
-                
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            System.err.println("CLOSING..");
-            this.closeTCPConnection();
             return true;
         }
         catch(IOException e){

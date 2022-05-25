@@ -84,8 +84,11 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
                 MembershipUtils.updateCluster(tcp_ip, target_node_id);
                 ntcpc = new NodeTCPClient(this.target_node_id, "7999");
                 ntcpc.start();
-                System.out.println("sending memship info..");
-                ntcpc.sendTCPMessage(MembershipUtils.createMessage(tcp_ip, "memshipInfo"));
+                try{
+                    ntcpc.sendTCPMessage(MembershipUtils.createMessage(tcp_ip, "memshipInfo"));
+                } finally{
+                    ntcpc.closeTCPConnection();
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -124,13 +127,18 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
     */
     class TaskMemshipInfo implements Runnable{
         private String target_node_id;
+        private String raw_cluster_members;
+        private String raw_logs;
 
-        public TaskMemshipInfo(String target_node_id){
+        public TaskMemshipInfo(String target_node_id, String raw_cluster_members, String raw_logs){
             this.target_node_id = target_node_id;
+            this.raw_cluster_members = raw_cluster_members;
+            this.raw_logs = raw_logs;
         }
 
         public void run(){
             try {
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -174,7 +182,10 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
                 executor.execute(new TaskLeaveReq(message_header[1], body_content[1]));
             }
             else if(body_content[0].equals("memshipInfo")){
-                executor.execute(new TaskMemshipInfo(message_header[1]));
+                executor.execute(new TaskMemshipInfo(message_header[1], body_content[1], body_content[2]));
+            }
+            else if(body_content[0].equals("storeKeyValue")){
+                
             }
             return;
         }

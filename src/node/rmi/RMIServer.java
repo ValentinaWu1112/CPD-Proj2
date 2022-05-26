@@ -62,6 +62,14 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
     private NodeMulticastServer nms;
     private ThreadPoolExecutor executor;
     private String last_joining_nodeid;
+    /* 
+        Keeps track of number of joinreq messages sent.
+    */
+    private int joinreq_timeout_counter;
+    /* 
+        Keeps track of number of memshipinfo messages received. 
+    */
+    private volatile int received_memshipinfo_messages_counter;
 
     /* 
         Task constituting the process of sending the 
@@ -85,10 +93,55 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
                 ntcpc = new NodeTCPClient(this.target_node_id, "7999");
                 ntcpc.start();
                 try{
-                    ntcpc.sendTCPMessage(MembershipUtils.createMessage(tcp_ip, "memshipInfo"));
+                    ntcpc.sendTCPMessage(MembershipUtils.createMessage(tcp_ip, "memshipInfo", "TCP"));
                 } finally{
                     ntcpc.closeTCPConnection();
                 }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+
+    /* 
+        Task responsible for nodes join timeout mechanism.
+    */
+    class TaskJoinTimeoutHandler implements Runnable{
+
+        public TaskJoinTimeoutHandler(){}
+
+        public void run(){
+            try {
+                /* 
+                    Sending at maximum 3 joinReq messages. After that, 
+                    the number of 'received_memshipinfo_messages_counter' (rmmc)
+                    determines (we hope) the number of nodes in the cluster on
+                    a range of [0,..,3], i.e, say 'rmmmc' == 2 after three 
+                    successfully sent joinReq messages, then we must assume theres 
+                    only 3 nodes in the cluster (the joinReq issuer included).
+                */
+                while(received_memshipinfo_messages_counter < 3){
+                    if(joinreq_timeout_counter >= 3){
+                        break;
+                    }
+                    nmc.sendMulticastMessage(MembershipUtils.createMessage(tcp_ip, "joinReq", "")); 
+                    TimeUnit.SECONDS.sleep(2);
+                    joinreq_timeout_counter++;
+                }
+                if(received_memshipinfo_messages_counter == 0){
+                    System.err.println("IM ALONE!");
+                    /* 
+                        TODO: Update its own Log and Cluster Member list
+                        Since the node is alone in the cluster, he won't receive
+                        any cluster information, so he creates his own containing
+                        only him. (yea, a node is a masculine character) 
+                    */
+                }
+                else if(received_memshipinfo_messages_counter == 1){
+                    System.err.println("IM HERE WITH SOMEONE ELSE o.O");
+                }
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -106,14 +159,8 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
 
         public void run(){
             try {
-                Random rand = new Random();
-                TimeUnit.SECONDS.sleep(rand.nextInt(3));
                 MembershipUtils.updateLog(tcp_ip, target_node_id.concat("-").concat(counter).concat(";"));
                 MembershipUtils.updateRemoveCluster(tcp_ip, target_node_id);
-                ntcpc = new NodeTCPClient(this.target_node_id, "7999");
-                ntcpc.start();
-                System.out.println("sending memship info..");
-                ntcpc.sendTCPMessage(MembershipUtils.createMessage(tcp_ip, "memshipInfo"));
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -123,17 +170,22 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
     /* 
         Task constituting the process of receiving a 
         message containing the membership information and
-        update the nodes view of the cluster.. 
+        updating the nodes view of the cluster. 
     */
     class TaskMemshipInfo implements Runnable{
-        private String target_node_id;
+        private String raw_cluster_members;
+        private String raw_logs;
 
-        public TaskMemshipInfo(String target_node_id){
-            this.target_node_id = target_node_id;
+        public TaskMemshipInfo(String raw_cluster_members, String raw_logs){
+            this.raw_cluster_members = raw_cluster_members;
+            this.raw_logs = raw_logs;
         }
 
         public void run(){
             try {
+                received_memshipinfo_messages_counter++;
+                MembershipUtils.rewriteClusterMembers(tcp_ip, raw_cluster_members);
+                MembershipUtils.rewriteLog(tcp_ip, raw_logs);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -159,7 +211,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
             String[] message_body = message_tokens[1].split(":");
             String[] body_content = message_body[1].split("_");
             /*
-                The node ignores its own messages
+                The node ignores its own Multicast messages
             */
             if(message_header[1].equals(tcp_ip)){
                 return;
@@ -175,8 +227,11 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
             else if(body_content[0].equals("leaveReq")){
                 executor.execute(new TaskLeaveReq(message_header[1], body_content[1]));
             }
-            else if(body_content[0].equals("memshipInfo")){
-                executor.execute(new TaskMemshipInfo(message_header[1]));
+            else if(body_content[0].equals("memshipInfoUDP")){
+                executor.execute(new TaskMemshipInfo(body_content[1], body_content[2]));
+            }
+            else if(body_content[0].equals("memshipInfoTCP") && received_memshipinfo_messages_counter < 3){
+                executor.execute(new TaskMemshipInfo(body_content[1], body_content[2]));
             }
             return;
         }
@@ -202,6 +257,8 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
         this.multicast_port = multicast_port;
         this.node_key = node_key;
         this.executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(4);
+        this.joinreq_timeout_counter = 0;
+        this.received_memshipinfo_messages_counter = 0;
     }
 
     public boolean joinMulticastGroup(){
@@ -247,7 +304,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
         */
         nmc.setInGroup(1);
         MembershipUtils.updateCounter(this.tcp_ip);
-        nmc.sendMulticastMessage(MembershipUtils.createMessage(this.tcp_ip, "joinReq")); 
+        executor.execute(new TaskJoinTimeoutHandler());
         return true;
     }
 
@@ -257,7 +314,9 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
             return false;
         }
         MembershipUtils.updateCounter(this.tcp_ip);
-        nmc.sendMulticastMessage(MembershipUtils.createMessage(this.tcp_ip, "leaveReq"));
+        joinreq_timeout_counter = 0;
+        received_memshipinfo_messages_counter = 0;
+        nmc.sendMulticastMessage(MembershipUtils.createMessage(this.tcp_ip, "leaveReq", ""));
         System.out.println("leaveMulticastGroup");
         nmc.setInGroup(0);
         nms.leaveMulticastGroup();

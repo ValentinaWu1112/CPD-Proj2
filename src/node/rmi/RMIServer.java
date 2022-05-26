@@ -96,6 +96,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
                     ntcpc.sendTCPMessage(MembershipUtils.createMessage(tcp_ip, "memshipInfo", "TCP"));
                 } finally{
                     ntcpc.closeTCPConnection();
+                    ntcpc = null;
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -163,6 +164,9 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
 
         public void run(){
             try {
+                if(last_joining_nodeid.equals(target_node_id)){
+                    last_joining_nodeid = null;
+                }
                 MembershipUtils.updateLog(tcp_ip, target_node_id.concat("-").concat(counter).concat(";"));
                 MembershipUtils.updateRemoveCluster(tcp_ip, target_node_id);
             } catch (Exception e) {

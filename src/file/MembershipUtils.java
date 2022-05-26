@@ -132,6 +132,8 @@ public final class MembershipUtils {
 
     /* 
         Overwrites cluster members list to whats given on 'raw_cluster_members' argument.
+        This method differs from updateCluster method, since it rewrites everything in the file
+        while updateCluster simply add or remove the given member passed as an argument.
     */
     public static boolean rewriteClusterMembers(String node_id, String raw_cluster_members){
         try {
@@ -148,7 +150,6 @@ public final class MembershipUtils {
         String node_key = Crypto.encodeValue(node_id);
         LinkedList <String> memberList = loadClusterMembers(node_key);
         if(!memberList.contains(cluster)) memberList.add(cluster);
-        //System.out.println("list: " + memberList);
         String newList = storeClusterMembers(memberList);
         return FileHandler.writeFile("../global/"+node_key+"/membership/", "cluster_members.txt", newList);
     }
@@ -156,9 +157,7 @@ public final class MembershipUtils {
     public static boolean updateRemoveCluster(String node_id, String cluster){
         String node_key = Crypto.encodeValue(node_id);
         LinkedList <String> memberList = loadClusterMembers(node_key);
-        //System.out.println("list: " + memberList);
         memberList.remove(cluster);
-        
         String newList = storeClusterMembers(memberList);
         return FileHandler.writeFile("../global/"+node_key+"/membership/", "cluster_members.txt", newList);
     }

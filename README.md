@@ -1,10 +1,10 @@
 # Distributed and Partitioned Key-Value Store
 
 ### TODO
-- [ ] Membership Protocol (Theory)
+- [ ] Membership Protocol (Theory)
 - [x] Node Multicast communication
 - [x] Node TCP communication
-- [ ] Node filesystem structure
+- [x] Node filesystem structure
 - [x] Node file I/O
 - [x] RMI Server implementation
 - [ ] Node RMI task JOIN

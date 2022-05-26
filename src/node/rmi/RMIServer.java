@@ -132,14 +132,18 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
                 if(received_memshipinfo_messages_counter == 0){
                     System.err.println("IM ALONE!");
                     /* 
-                        TODO: Update its own Log and Cluster Member list
                         Since the node is alone in the cluster, he won't receive
                         any cluster information, so he creates his own containing
                         only him. (yea, a node is a masculine character) 
                     */
+                    MembershipUtils.updateLog(tcp_ip, tcp_ip.concat("-").concat(MembershipUtils.getRawCounter(Crypto.encodeValue((tcp_ip)))).concat(";"));
+                    MembershipUtils.rewriteClusterMembers(tcp_ip, tcp_ip);
                 }
                 else if(received_memshipinfo_messages_counter == 1){
                     System.err.println("IM HERE WITH SOMEONE ELSE o.O");
+                }
+                else if(received_memshipinfo_messages_counter == 2){
+                    System.err.println("I GOT 2 FRIENDS, WE 3 HERE!");
                 }
 
             } catch (Exception e) {

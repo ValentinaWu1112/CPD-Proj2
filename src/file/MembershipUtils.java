@@ -270,8 +270,8 @@ public final class MembershipUtils {
     }
 
     public static String getRawCounter(String node_key){
-        String raw_logs = FileHandler.readFile("../global/"+node_key+"/membership/", "counter.txt");
-        return raw_logs;
+        String raw_counter = FileHandler.readFile("../global/"+node_key+"/membership/", "counter.txt");
+        return raw_counter;
     }
 
     public static String getRawKeyValues(String node_key){

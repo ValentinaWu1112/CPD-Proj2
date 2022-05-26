@@ -7,7 +7,7 @@
 - [ ] Node filesystem structure
 - [x] Node file I/O
 - [x] RMI Server implementation
-- [ ] Node RMI task JOIN
+- [x] Node RMI task JOIN
 - [ ] Node RMI task LEAVE
 - [ ] Node RMI task GET 
 - [ ] Node RMI task PUT

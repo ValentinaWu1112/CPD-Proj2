@@ -39,7 +39,9 @@ Here, the header contains, separated by the ':' character, the issuer of the mes
 ``` joinReq_counter ```
 
 #### Membership Information Message (the message a node sends to the joining node / the message one cluster node broadcasts every second) [TCP & UDP] 
-``` memshipInfo_nodeid1-nodeid2_nodeid1-counter1;nodeid2-counter2; ```
+``` memshipInfoUDP_nodeid1-nodeid2_nodeid1-counter1;nodeid2-counter2; ```
+``` memshipInfoTCP_nodeid1-nodeid2_nodeid1-counter1;nodeid2-counter2; ```<br/>
+- Since the node stops processing memshipInfo messages, sent via TCP, after receiving 3 of them, this distinction is necessary. memshipInfoUDP messages are always recevied&processed while memshipInfoTCP might not be processed depending on how many it has received.
 
 #### LeaveReq Message (the message the node broadcasts when it leaves) [UDP]
 ``` leaveReq_counter ```

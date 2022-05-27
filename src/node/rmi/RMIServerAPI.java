@@ -10,7 +10,7 @@ import java.rmi.RemoteException;
 public interface RMIServerAPI extends Remote{
     boolean joinMulticastGroup() throws RemoteException;
     boolean leaveMulticastGroup() throws RemoteException;
-    boolean getValue(String key) throws RemoteException;
+    String getValue(String key) throws RemoteException;
     boolean putValue(String key, String value) throws RemoteException;
-    boolean deleteValue(String key) throws RemoteException;
+    boolean deleteKey(String key) throws RemoteException;
 }

@@ -186,6 +186,129 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
         }
     }
 
+    class TaskReceiveDeleteKey implements Runnable{
+        private String target_node_id;
+        private String key;
+
+        public TaskReceiveDeleteKey(String target_node_id, String key){
+            this.target_node_id = target_node_id;
+            this.key = key;
+        }
+
+        public void run(){
+            try {
+                FileHandler.delete("../global/"+Crypto.encodeValue(tcp_ip)+"/storage/"+key+".txt");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    class TaskReceiveGetValue implements Runnable{
+        private String target_node_id;
+        private String key;
+
+        public TaskReceiveGetValue(String target_node_id, String key){
+            this.target_node_id = target_node_id;
+            this.key = key;
+        }
+
+        public void run(){
+            try {
+                String out = FileHandler.readFile("../global/"+Crypto.encodeValue(tcp_ip)+"/storage/", key+".txt");
+                System.out.println("get: " + out);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    class TaskDeleteKey implements Runnable{
+        private String target_node_id;
+        private String key;
+
+        public TaskDeleteKey(String target_node_id, String key){
+            this.target_node_id = target_node_id;
+            this.key = key;
+        }
+
+        public void run(){
+            try{
+                ntcpc = new NodeTCPClient(this.target_node_id, "7999");
+                ntcpc.start();
+                try{
+                    ntcpc.sendTCPMessage(MembershipUtils.createMessage(tcp_ip, "deleteKey", key, ""));
+                }
+                finally{
+                    ntcpc.closeTCPConnection();
+                    ntcpc = null;
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    class TaskPutValue implements Runnable{
+        private String target_node_id;
+        private String key;
+        private String value;
+
+        private TaskPutValue(String target_node_id, String key, String value){
+            this.target_node_id = target_node_id;
+            this.key = key;
+            this.value=value;
+        }
+
+        public void run(){
+            try{
+                ntcpc = new NodeTCPClient(this.target_node_id, "7999");
+                ntcpc.start();
+                try{
+                    ntcpc.sendTCPMessage(MembershipUtils.createMessage(tcp_ip, "putValue", key, value));
+                }
+                finally{
+                    ntcpc.closeTCPConnection();
+                    ntcpc = null;
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+    }
+
+    class TaskGetValue implements Runnable{
+        private String target_node_id;
+        private String key;
+
+        public TaskGetValue(String target_node_id, String key){
+            this.target_node_id = target_node_id;
+            this.key = key;
+        }
+
+        public void run(){
+            try{
+                ntcpc = new NodeTCPClient(this.target_node_id, "7999");
+                ntcpc.start();
+                try{
+                    System.out.println("TCP: " + MembershipUtils.createMessage(tcp_ip, "getValue", key, ""));
+                    boolean v = ntcpc.sendTCPMessage(MembershipUtils.createMessage(tcp_ip, "getValue", key, ""));
+                    System.out.println("ntcp get: " + v);
+                }
+                finally{
+                    ntcpc.closeTCPConnection();
+                    ntcpc = null;
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     /* 
         Task constituting the process of receiving a 
         message containing the membership information and
@@ -252,6 +375,12 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
             else if(body_content[0].equals("memshipInfoTCP") && received_memshipinfo_messages_counter < 3){
                 executor.execute(new TaskMemshipInfo(body_content[1], body_content[2]));
             }
+            else if(body_content[0].equals("deleteKey")){
+                executor.execute(new TaskReceiveDeleteKey(message_header[1], body_content[1]));
+            }
+            else if(body_content[0].equals("getValue")){
+                executor.execute(new TaskReceiveGetValue(message_header[1],body_content[1]));
+            }
             return;
         }
 
@@ -263,6 +392,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
                 }
                 while(ntcps != null && ntcps.messages_queue.size() > 0){
                     String message = ntcps.messages_queue.remove();
+                    System.out.println("messages queue: " + message);
                     processMessage(message);
                 }
             }
@@ -341,16 +471,33 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
         return true;
     }
 
-    public boolean getValue(String key){
-        System.out.println("getValue");
-        return true;
+    public String getValue(String key){
+        try{
+            System.out.println("getValue key");
+            if(FileHandler.isFile("../global/" + Crypto.encodeValue(tcp_ip) + "/storage/"+ key + ".txt")){
+                return FileHandler.readFile("../global/"+Crypto.encodeValue(tcp_ip) + "/storage/", key+".txt");
+            }
+            else{
+                executor.execute(new TaskGetValue(MembershipUtils.getResponsibleNodeGivenKey(tcp_ip, key),key));
+            }
+            return null;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     public boolean putValue(String key, String value){
         try {
-            System.out.println("putValue");
-            FileHandler.createFile("../global/" + Crypto.encodeValue(tcp_ip) + "/storage/", key);
-            FileHandler.writeFile("../global/" + Crypto.encodeValue(tcp_ip) + "/storage/", key, value);
+            System.out.println("putValue (key,value)");
+            String nodeResp = MembershipUtils.getResponsibleNodeGivenKey(tcp_ip,key);
+            if(nodeResp.equals(tcp_ip)){
+                FileHandler.createFile("../global/" + Crypto.encodeValue(tcp_ip) + "/storage/", key+".txt");
+                FileHandler.writeFile("../global/" + Crypto.encodeValue(tcp_ip) + "/storage/", key+".txt", value);
+            }
+            else{
+                executor.execute(new TaskPutValue(nodeResp, key, value));
+            }
             return true;
         } catch (Exception e) {
             e.printStackTrace();
@@ -358,9 +505,20 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
         }
     }
 
-    public boolean deleteValue(String key){
-        System.out.println("deleteValue");
-        return false;
+    public boolean deleteKey(String key){
+        try{
+            System.out.println("deleteKey key");
+            if(FileHandler.isFile("../global/" + Crypto.encodeValue(tcp_ip) + "/storage/"+ key + ".txt")){
+                return FileHandler.delete("../global/"+Crypto.encodeValue(tcp_ip) + "/storage/"+ key+".txt");
+            }
+            else{
+                executor.execute(new TaskDeleteKey(MembershipUtils.getResponsibleNodeGivenKey(tcp_ip, key),key));
+            }
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     public void run() {

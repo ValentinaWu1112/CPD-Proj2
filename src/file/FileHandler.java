@@ -92,7 +92,18 @@ public final class FileHandler {
         }
     }
 
-    public static boolean deleteDir(String path){
+    public static boolean isFile(String path){
+        try{
+            File ret = new File(pathName + "/" + path);
+            return ret.exists();
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public static boolean delete(String path){
         try{
             File eliminate = new File(pathName + "/" + path);
             
@@ -103,7 +114,7 @@ public final class FileHandler {
                 else System.out.println("Failed to eliminate");
                 return false;
             }
-            else System.out.println(pathName + "" + path + "doesn't exist");
+            else System.out.println(pathName + "/" + path + "doesn't exist");
             return false;
             
         } catch (Exception e) {

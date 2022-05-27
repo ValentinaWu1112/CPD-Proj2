@@ -28,6 +28,7 @@ public final class MembershipUtils {
             hashed_members_list.add(hashed_member);
             hashed_members.put(hashed_member, member);
         }
+        Collections.sort(hashed_members_list);
         boolean flag = false;
         String respondible_node_id = null;
         for(String hm : hashed_members_list) {
@@ -50,14 +51,27 @@ public final class MembershipUtils {
     public static String getResponsibleNodeGivenKey(String node_id, String key){
         String node_key = Crypto.encodeValue(node_id);
         LinkedList<String> members = loadClusterMembers(node_key);
+        LinkedList<String> hashed_members_list = new LinkedList<>();
+        TreeMap<String,String> hashed_members = new TreeMap<>();
+        for(String member : members){
+            String hashed_member = Crypto.encodeValue(member);
+            hashed_members_list.add(hashed_member);
+            hashed_members.put(hashed_member, member);
+        }
+        Collections.sort(hashed_members_list);
+
         if(members.size() > 0){
             String responsible_node = null;
-            for(int i=0; i<members.size(); i++){
+
+            for(String hm : hashed_members_list) {
+                if(node_key.compareTo(hm)<=0) responsible_node = hashed_members.get(hm);
+            }
+            /*for(int i=0; i<members.size(); i++){
                 if(key.compareTo(members.get(i)) <= 0){
                     responsible_node = members.get(i);
                 }
-            }
-            if(responsible_node == null) responsible_node = members.get(0);
+            }*/
+            if(responsible_node == null) responsible_node = hashed_members.get(hashed_members_list.get(0));;
             return responsible_node;
         }
         else{
@@ -245,6 +259,15 @@ public final class MembershipUtils {
             case "leaveReq":
                 message = message.concat(createLeaveReqMessage(node_id));
                 break;
+            case "deleteKey":
+                message = message.concat(createDeleteKeyMessage(protocol));
+                break;
+            case "getValue":
+                message = message.concat(createGetValueMessage(protocol));
+                break;
+            case "putValue":
+                message = message.concat(createPutValueMessage(protocol,dest_node_id));
+                break;
         }
         
         return message;
@@ -255,6 +278,21 @@ public final class MembershipUtils {
         String node_counter = FileHandler.readFile("../global/"+node_key+"/membership/", "counter.txt");
         String message = "joinReq_"+node_counter;
         return message;
+    }
+    
+    public static String createDeleteKeyMessage(String key){
+        /*protocol has the value of the key */
+        return "deleteKey_"+key;
+    }
+
+    public static String createGetValueMessage(String key){
+        /*protocol has the value of the key */
+        return "getValue_"+key;
+    }
+
+    public static String createPutValueMessage(String key, String value){
+        /*protocol is the key and dest_node_id */
+        return "storeKeyValue_"+key+"+"+value;
     }
 
     public static String createMembershipInfoMessage(String node_id, String protocol){
@@ -324,6 +362,7 @@ public final class MembershipUtils {
     public static String getRawKeyValues(String node_key, String resp_node_key){
         String key_values = "";
         LinkedList<String> files = FileHandler.getDirectoryFiles("../global"+ node_key + "/", "storage");
+        System.out.println(files);
         for(String file : files){
             if(resp_node_key.compareTo(file) >= 0){
                 String value = FileHandler.readFile("../global/"+node_key+"/storage/", file+".txt");

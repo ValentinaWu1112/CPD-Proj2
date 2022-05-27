@@ -42,6 +42,11 @@ public final class MembershipUtils {
         return respondible_node_id;
     }
 
+    /* 
+        Returns responsible node given a file key.
+
+        TODO: optimize time complexity from linear to logarithmic search!
+    */
     public static String getResponsibleNodeGivenKey(String node_id, String key){
         String node_key = Crypto.encodeValue(node_id);
         LinkedList<String> members = loadClusterMembers(node_key);

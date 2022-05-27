@@ -223,6 +223,25 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
         }
     }
 
+    class TaskStorageValue implements Runnable{
+        private String target_node_id;
+        private String store;
+
+        public TaskStorageValue(String target_node_id, String store){
+            this.target_node_id = target_node_id;
+            this.store = store;
+        }
+
+        public void run(){
+            try{
+                MembershipUtils.updateStorage(tcp_ip, store);
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     class TaskDeleteKey implements Runnable{
         private String target_node_id;
         private String key;
@@ -380,6 +399,9 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
             }
             else if(body_content[0].equals("getValue")){
                 executor.execute(new TaskReceiveGetValue(message_header[1],body_content[1]));
+            }
+            else if(body_content[0].equals("storeKeyValue")){
+                executor.execute(new TaskStorageValue(message_header[1],body_content[1]));
             }
             return;
         }

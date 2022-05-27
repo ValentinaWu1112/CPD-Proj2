@@ -6,6 +6,21 @@ import crypto.Crypto;
 public final class MembershipUtils {
     private MembershipUtils(){}
 
+    public static boolean updateStorage(String node_id, String store){
+        String node_key = Crypto.encodeValue(node_id);
+        LinkedList<String> files = FileHandler.getDirectoryFiles("../global"+ node_key + "/", "storage");
+        
+        String[] pairs = store.split("-");
+        for(String pair: pairs){
+            String[] key_value = pair.split("+");
+            if(!files.contains(key_value[0])){
+                FileHandler.createFile("../global/"+node_key+"/storage/", key_value[0]+".txt");
+                return FileHandler.writeFile("../global/"+node_key+"/storage/", key_value[0]+".txt", key_value[1]);
+            } 
+        }
+        return false;
+    }
+
     /* 
         Returns node that is responsible for some other node keys.
         The node_id param corresponds to the node we trying to find 
@@ -362,7 +377,7 @@ public final class MembershipUtils {
     public static String getRawKeyValues(String node_key, String resp_node_key){
         String key_values = "";
         LinkedList<String> files = FileHandler.getDirectoryFiles("../global"+ node_key + "/", "storage");
-        System.out.println(files);
+        System.out.println("file bool" + files.isEmpty());
         for(String file : files){
             if(resp_node_key.compareTo(file) >= 0){
                 String value = FileHandler.readFile("../global/"+node_key+"/storage/", file+".txt");

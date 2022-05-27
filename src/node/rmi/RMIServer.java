@@ -154,6 +154,9 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
                 else if(received_memshipinfo_messages_counter == 2){
                     System.err.println("I GOT 2 FRIENDS, WE 3 HERE!");
                 }
+                else{
+                    System.err.println("WHOLE LOTTA NODES HERE!");
+                }
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -344,8 +347,15 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
     }
 
     public boolean putValue(String key, String value){
-        System.out.println("putValue");
-        return true;
+        try {
+            System.out.println("putValue");
+            FileHandler.createFile("../global/" + Crypto.encodeValue(tcp_ip) + "/storage/", key);
+            FileHandler.writeFile("../global/" + Crypto.encodeValue(tcp_ip) + "/storage/", key, value);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     public boolean deleteValue(String key){

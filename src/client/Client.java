@@ -37,7 +37,12 @@ public class Client {
                     break;
                 case "put":
                     String path_file = args[2];
-                    
+                    String file_content = FileHandler.readFile(path_file, "");
+                    if(file_content != null){
+                        String file_key = Crypto.encodeValue(file_content);
+                        verdict = stubRMIServerAPI.putValue(file_key, file_content);
+                        System.out.println("put: " + verdict);
+                    }
                     break;
             }
             //response = stubRMIServerAPI.leaveMulticastGroup();

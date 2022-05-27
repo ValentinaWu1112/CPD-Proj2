@@ -8,11 +8,20 @@ public final class MembershipUtils {
 
     /* 
         Returns node that is responsible for some other node keys.
+        The node_id param corresponds to the node we trying to find 
+        the successor of, so, for example, if we want to get the
+        successor of the node with id 1, simply call this method with
+        1 as an argument. 
+
+        TODO: optimize time complexity from linear to logarithmic search!
     */
     public static String getResponsibleNode(String node_id){
         String node_key = Crypto.encodeValue(node_id);
         LinkedList<String> members = loadClusterMembers(node_key);
-        LinkedList<String> hashed_members_list = loadClusterMembers(node_key);
+        if(members.size() == 0){
+            return null;
+        }
+        LinkedList<String> hashed_members_list = new LinkedList<>();
         TreeMap<String,String> hashed_members = new TreeMap<>();
         for(String member : members){
             String hashed_member = Crypto.encodeValue(member);
@@ -186,7 +195,19 @@ public final class MembershipUtils {
         return sb.toString();
     }
 
-    public static String createMessage(String node_id, String operation, String protocol){
+    /* 
+        Creates any kind of message given the specified operation.
+
+        The protocol parameter is only used to distinguish memshipInfo 
+        messages, so when calling this method and the operation argument 
+        isn't 'memshipInfo' simply pass a dummy string, eg.: "", as the 
+        protocol argument value.
+
+        Identically to the protocol parameter, the dest_node_id parameter
+        is only used for storeKeyValue messages, so whenever protocol does 
+        not equal 'storeKeyValue' simply pass it as "".
+    */
+    public static String createMessage(String node_id, String operation, String protocol, String dest_node_id){
         String message = "header:"+node_id+" body:";
         switch(operation){
             case "joinReq":
@@ -196,7 +217,7 @@ public final class MembershipUtils {
                 message = message.concat(createMembershipInfoMessage(node_id, protocol));
                 break;
             case "storeKeyValue":
-                message = message.concat(createStoreKeyValueMessage(node_id));
+                message = message.concat(createStoreKeyValueMessage(node_id, dest_node_id));
                 break;
             case "leaveReq":
                 message = message.concat(createLeaveReqMessage(node_id));
@@ -221,11 +242,10 @@ public final class MembershipUtils {
         return message;
     }
 
-    public static String createStoreKeyValueMessage(String node_id){
+    public static String createStoreKeyValueMessage(String node_id, String dest_node_id){
         String node_key = Crypto.encodeValue(node_id);
-        String cluster_members = getRawKeyValues(node_key);
-        String logs = getRawLogs(node_key);
-        String message = "memshipInfo_"+cluster_members+"_"+logs;
+        String cluster_members = getRawKeyValues(node_key, dest_node_id);
+        String message = "memshipInfo_"+cluster_members;
         return message;
     }
 
@@ -273,16 +293,22 @@ public final class MembershipUtils {
         return raw_counter;
     }
 
-    public static String getRawKeyValues(String node_key){
+    /* 
+        Returns a raw data string containing all key-values that a
+        specific node, given its key on resp_node_key parameter, is
+        responsible for.
+    */
+    public static String getRawKeyValues(String node_key, String resp_node_key){
         String key_values = "";
         LinkedList<String> files = FileHandler.getDirectoryFiles("../global"+ node_key + "/", "storage");
-        int i=0;
         for(String file : files){
-            String value = FileHandler.readFile("../global/"+node_key+"/storage/", file+".txt");
-            if(i != 0) key_values = key_values.concat("-");
-            key_values = key_values.concat(file+"+"+value);
-            i++;
+            if(resp_node_key.compareTo(file) >= 0){
+                String value = FileHandler.readFile("../global/"+node_key+"/storage/", file+".txt");
+                key_values = key_values.concat(file+"+"+value);
+                key_values = key_values.concat("-");
+            }
         }
+        key_values = key_values.substring(0, key_values.length()-1);
         return key_values;
     }
 }

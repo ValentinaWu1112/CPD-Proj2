@@ -3,7 +3,6 @@ package node.tcp;
 import java.io.*;
 import java.net.*;
 import java.lang.Thread;
-import java.util.concurrent.TimeUnit;
 
 /* 
     Thread responsible for TCP 'client side', i.e, starting TCP connections, sending messages and
@@ -63,6 +62,7 @@ public class NodeTCPClient extends Thread{
             while (!socket.isClosed()){
                 try{
                     tcp_message = input_server.readUTF();
+                    System.out.println("[TCP Server]: " + tcp_message);
                 }
                 catch(IOException i){
                     System.out.println(i);

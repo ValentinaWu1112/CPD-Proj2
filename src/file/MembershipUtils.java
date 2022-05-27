@@ -42,6 +42,24 @@ public final class MembershipUtils {
         return respondible_node_id;
     }
 
+    public static String getResponsibleNodeGivenKey(String node_id, String key){
+        String node_key = Crypto.encodeValue(node_id);
+        LinkedList<String> members = loadClusterMembers(node_key);
+        if(members.size() > 0){
+            String responsible_node = null;
+            for(int i=0; i<members.size(); i++){
+                if(key.compareTo(members.get(i)) <= 0){
+                    responsible_node = members.get(i);
+                }
+            }
+            if(responsible_node == null) responsible_node = members.get(0);
+            return responsible_node;
+        }
+        else{
+            return null;
+        }
+    }
+
     public static boolean updateCounter(String node_id){
         String node_key = Crypto.encodeValue(node_id);
         String counter = getRawCounter(node_key);

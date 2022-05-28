@@ -8,11 +8,11 @@ public final class MembershipUtils {
 
     public static boolean updateStorage(String node_id, String store){
         String node_key = Crypto.encodeValue(node_id);
-        LinkedList<String> files = FileHandler.getDirectoryFiles("../global"+ node_key + "/", "storage");
+        LinkedList<String> files = FileHandler.getDirectoryFiles("../global/"+ node_key + "/", "storage");
         
         String[] pairs = store.split("-");
         for(String pair: pairs){
-            String[] key_value = pair.split("+");
+            String[] key_value = pair.split("\\+");
             if(!files.contains(key_value[0])){
                 FileHandler.createFile("../global/"+node_key+"/storage/", key_value[0]+".txt");
                 return FileHandler.writeFile("../global/"+node_key+"/storage/", key_value[0]+".txt", key_value[1]);
@@ -260,7 +260,7 @@ public final class MembershipUtils {
         not equal 'storeKeyValue' simply pass it as "".
     */
     public static String createMessage(String node_id, String operation, String protocol, String dest_node_id){
-        String message = "header:"+node_id+" body:";
+        String message = "header:"+node_id+"#body:";
         switch(operation){
             case "joinReq":
                 message = message.concat(createJoinReqMessage(node_id));
@@ -282,6 +282,9 @@ public final class MembershipUtils {
                 break;
             case "putValue":
                 message = message.concat(createPutValueMessage(protocol,dest_node_id));
+                break;
+            case "getReturn":
+                message = message.concat(createGetReturnMessage(protocol));
                 break;
         }
         
@@ -308,6 +311,10 @@ public final class MembershipUtils {
     public static String createPutValueMessage(String key, String value){
         /*protocol is the key and dest_node_id */
         return "storeKeyValue_"+key+"+"+value;
+    }
+
+    public static String createGetReturnMessage(String value){
+        return "getReturn_"+value;
     }
 
     public static String createMembershipInfoMessage(String node_id, String protocol){

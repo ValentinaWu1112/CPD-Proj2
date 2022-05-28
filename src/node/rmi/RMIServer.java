@@ -216,7 +216,17 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
         public void run(){
             try {
                 String out = FileHandler.readFile("../global/"+Crypto.encodeValue(tcp_ip)+"/storage/", key+".txt");
-                System.out.println("get: " + out);
+                //System.out.println("get: " + out);
+                ntcpc = new NodeTCPClient(this.target_node_id, "7999");
+                ntcpc.start();
+                try{
+                    ntcpc.sendTCPMessage(MembershipUtils.createMessage(tcp_ip, "getReturn", out, ""));
+                    
+                } finally{
+                    ntcpc.closeTCPConnection();
+                    ntcpc = null;
+                }
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -367,7 +377,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
         }
 
         private void processMessage(String message){
-            String[] message_tokens = message.split(" ");
+            String[] message_tokens = message.split("#");
             String[] message_header = message_tokens[0].split(":");
             String[] message_body = message_tokens[1].split(":");
             String[] body_content = message_body[1].split("_");
@@ -414,7 +424,6 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
                 }
                 while(ntcps != null && ntcps.messages_queue.size() > 0){
                     String message = ntcps.messages_queue.remove();
-                    System.out.println("messages queue: " + message);
                     processMessage(message);
                 }
             }

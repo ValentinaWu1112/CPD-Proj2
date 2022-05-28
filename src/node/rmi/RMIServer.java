@@ -61,6 +61,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
     private NodeMulticastServer nms;
     private ThreadPoolExecutor executor;
     private String last_joining_nodeid;
+    MessageScout scout;
     /* 
         Keeps track of number of joinreq messages sent.
     */
@@ -216,7 +217,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
         public void run(){
             try {
                 String out = FileHandler.readFile("../global/"+Crypto.encodeValue(tcp_ip)+"/storage/", key+".txt");
-                //System.out.println("get: " + out);
+                System.out.println("ntcp: " + target_node_id + " , out: " + out);
                 ntcpc = new NodeTCPClient(this.target_node_id, "7999");
                 ntcpc.start();
                 try{
@@ -372,8 +373,14 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
     */
     class MessageScout extends Thread{
         String tcp_ip;
+        String getValue;
+
         public MessageScout(String tcp_ip){
             this.tcp_ip = tcp_ip;
+        }
+
+        public String getValue(){
+            return getValue;
         }
 
         private void processMessage(String message){
@@ -410,6 +417,11 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
             else if(body_content[0].equals("getValue")){
                 executor.execute(new TaskReceiveGetValue(message_header[1],body_content[1]));
             }
+            else if(body_content[0].equals("getReturn")){
+                getValue=new String(body_content[1]);
+                System.out.println("body: " + body_content[1]);
+                System.out.println("getValue: " + getValue);
+;            }
             else if(body_content[0].equals("storeKeyValue")){
                 executor.execute(new TaskStorageValue(message_header[1],body_content[1]));
             }
@@ -510,8 +522,10 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
             }
             else{
                 executor.execute(new TaskGetValue(MembershipUtils.getResponsibleNodeGivenKey(tcp_ip, key),key));
+                String get = scout.getValue();
+                System.out.println("get: " + get);
+                return get;
             }
-            return null;
         } catch (Exception e) {
             e.printStackTrace();
             return null;
@@ -562,7 +576,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
         */
         nms = new NodeMulticastServer(this.multicast_ip, this.multicast_port);
         nms.start();
-        MessageScout scout = new MessageScout(this.tcp_ip);
+        scout = new MessageScout(this.tcp_ip);
         scout.start();
     }
 }

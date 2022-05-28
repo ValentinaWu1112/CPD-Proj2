@@ -61,7 +61,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
     private NodeMulticastServer nms;
     private ThreadPoolExecutor executor;
     private String last_joining_nodeid;
-    MessageScout scout;
+    private MessageScout scout;
     /* 
         Keeps track of number of joinreq messages sent.
     */
@@ -217,7 +217,6 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
         public void run(){
             try {
                 String out = FileHandler.readFile("../global/"+Crypto.encodeValue(tcp_ip)+"/storage/", key+".txt");
-                System.out.println("ntcp: " + target_node_id + " , out: " + out);
                 ntcpc = new NodeTCPClient(this.target_node_id, "7999");
                 ntcpc.start();
                 try{
@@ -324,9 +323,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
                 ntcpc = new NodeTCPClient(this.target_node_id, "7999");
                 ntcpc.start();
                 try{
-                    System.out.println("TCP: " + MembershipUtils.createMessage(tcp_ip, "getValue", key, ""));
-                    boolean v = ntcpc.sendTCPMessage(MembershipUtils.createMessage(tcp_ip, "getValue", key, ""));
-                    System.out.println("ntcp get: " + v);
+                    ntcpc.sendTCPMessage(MembershipUtils.createMessage(tcp_ip, "getValue", key, ""));
                 }
                 finally{
                     ntcpc.closeTCPConnection();
@@ -373,7 +370,10 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
     */
     class MessageScout extends Thread{
         String tcp_ip;
+
+        /*response of the getValue*/
         String getValue;
+        boolean flagGet = false;
 
         public MessageScout(String tcp_ip){
             this.tcp_ip = tcp_ip;
@@ -381,6 +381,15 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
 
         public String getValue(){
             return getValue;
+        }
+
+        public void resetFlagGet(){
+            flagGet=false;
+            return;
+        }
+
+        public boolean flagGet(){
+            return flagGet;
         }
 
         private void processMessage(String message){
@@ -419,8 +428,8 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
             }
             else if(body_content[0].equals("getReturn")){
                 getValue=new String(body_content[1]);
-                System.out.println("body: " + body_content[1]);
-                System.out.println("getValue: " + getValue);
+                flagGet=true;
+                System.out.println("string: " + getValue + " flag: " + flagGet);
 ;            }
             else if(body_content[0].equals("storeKeyValue")){
                 executor.execute(new TaskStorageValue(message_header[1],body_content[1]));
@@ -516,14 +525,19 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
 
     public String getValue(String key){
         try{
-            System.out.println("getValue key");
+            System.out.println("get(" + key + ")");
             if(FileHandler.isFile("../global/" + Crypto.encodeValue(tcp_ip) + "/storage/"+ key + ".txt")){
                 return FileHandler.readFile("../global/"+Crypto.encodeValue(tcp_ip) + "/storage/", key+".txt");
             }
             else{
                 executor.execute(new TaskGetValue(MembershipUtils.getResponsibleNodeGivenKey(tcp_ip, key),key));
+                while(!scout.flagGet()){
+                    System.out.println("false");
+                }
+                
                 String get = scout.getValue();
-                System.out.println("get: " + get);
+                scout.resetFlagGet();
+                System.out.println("get: " + get + " flag: " + scout.flagGet());
                 return get;
             }
         } catch (Exception e) {
@@ -534,7 +548,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
 
     public boolean putValue(String key, String value){
         try {
-            System.out.println("putValue (key,value)");
+            System.out.println("putValue (" +  key + "," + value + ")");
             String nodeResp = MembershipUtils.getResponsibleNodeGivenKey(tcp_ip,key);
             if(nodeResp.equals(tcp_ip)){
                 FileHandler.createFile("../global/" + Crypto.encodeValue(tcp_ip) + "/storage/", key+".txt");
@@ -552,7 +566,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
 
     public boolean deleteKey(String key){
         try{
-            System.out.println("deleteKey key");
+            System.out.println("delete (" + key + ")");
             if(FileHandler.isFile("../global/" + Crypto.encodeValue(tcp_ip) + "/storage/"+ key + ".txt")){
                 return FileHandler.delete("../global/"+Crypto.encodeValue(tcp_ip) + "/storage/"+ key+".txt");
             }

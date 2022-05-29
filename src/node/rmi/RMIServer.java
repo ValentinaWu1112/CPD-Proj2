@@ -93,11 +93,6 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
                 ntcpc = new NodeTCPClient(this.target_node_id, "7999");
                 ntcpc.start();
                 try{
-                    /* 
-                        TODO: bug in join operation where key doesnt travel to
-                        responsible node, the storekeyvlaue message is empty
-                        when it should contain keyvalues
-                    */
                     ntcpc.sendTCPMessage(MembershipUtils.createMessage(tcp_ip, "memshipInfo", "TCP", "", -1));
                     String responsible_node = MembershipUtils.getResponsibleNode(target_node_id);
                     if(responsible_node != null && responsible_node.equals(tcp_ip)){

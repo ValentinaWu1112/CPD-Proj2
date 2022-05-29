@@ -39,6 +39,7 @@ public class NodeTCPClient extends Thread{
 
     public boolean closeTCPConnection(){
         try{
+            while(!this.getTCPOutSocket()){}
             out.close();
             socket.close();
             System.out.println("Connection closed");

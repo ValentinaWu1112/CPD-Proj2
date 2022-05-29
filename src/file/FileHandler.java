@@ -150,4 +150,16 @@ public final class FileHandler {
         return;
     }
 
+    /* 
+        Deletes the given file/directory.
+    */
+    public static void deleteUnity(String path, String file){
+        File file_to_delete = new File(pathName + "/" + path + "" + file);
+        try {
+            file_to_delete.delete();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 }

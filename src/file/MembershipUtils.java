@@ -68,25 +68,27 @@ public final class MembershipUtils {
         LinkedList<String> members = loadClusterMembers(node_key);
         LinkedList<String> hashed_members_list = new LinkedList<>();
         TreeMap<String,String> hashed_members = new TreeMap<>();
-        for(String member : members){
-            String hashed_member = Crypto.encodeValue(member);
-            hashed_members_list.add(hashed_member);
-            hashed_members.put(hashed_member, member);
-        }
-        Collections.sort(hashed_members_list);
 
         if(members.size() > 0){
+            for(String member : members){
+                String hashed_member = Crypto.encodeValue(member);
+                hashed_members_list.add(hashed_member);
+                hashed_members.put(hashed_member, member);
+            }
+            Collections.sort(hashed_members_list);
+
             String responsible_node = null;
 
-            for(String hm : hashed_members_list) {
+            /* for(String hm : hashed_members_list) {
                 if(node_key.compareTo(hm)<=0) responsible_node = hashed_members.get(hm);
-            }
-            /*for(int i=0; i<members.size(); i++){
-                if(key.compareTo(members.get(i)) <= 0){
-                    responsible_node = members.get(i);
+            } */
+            for(int i=0; i<hashed_members_list.size(); i++){
+                if(key.compareTo(hashed_members_list.get(i)) <= 0){
+                    responsible_node = hashed_members.get(hashed_members_list.get(i));
                 }
-            }*/
-            if(responsible_node == null) responsible_node = hashed_members.get(hashed_members_list.get(0));;
+            }
+            
+            if(responsible_node == null) responsible_node = hashed_members.get(hashed_members_list.get(0));
             return responsible_node;
         }
         else{
@@ -259,7 +261,7 @@ public final class MembershipUtils {
         is only used for storeKeyValue messages, so whenever protocol does 
         not equal 'storeKeyValue' simply pass it as "".
     */
-    public static String createMessage(String node_id, String operation, String protocol, String dest_node_id){
+    public static String createMessage(String node_id, String operation, String protocol, String dest_node_id, int store_flag){
         String message = "header:"+node_id+"#body:";
         switch(operation){
             case "joinReq":
@@ -269,7 +271,7 @@ public final class MembershipUtils {
                 message = message.concat(createMembershipInfoMessage(node_id, protocol));
                 break;
             case "storeKeyValue":
-                message = message.concat(createStoreKeyValueMessage(node_id, dest_node_id));
+                message = message.concat(createStoreKeyValueMessage(node_id, dest_node_id, store_flag));
                 break;
             case "leaveReq":
                 message = message.concat(createLeaveReqMessage(node_id));
@@ -325,10 +327,11 @@ public final class MembershipUtils {
         return message;
     }
 
-    public static String createStoreKeyValueMessage(String node_id, String dest_node_id){
+    public static String createStoreKeyValueMessage(String node_id, String dest_node_id, int store_flag){
         String node_key = Crypto.encodeValue(node_id);
-        String cluster_members = getRawKeyValues(node_key, dest_node_id);
-        String message = "memshipInfo_"+cluster_members;
+        String dest_node_key = Crypto.encodeValue(dest_node_id);
+        String successor_raw_key_values = store_flag == 0 ? getRawKeyValuesSuccessor(node_key, dest_node_key) : getRawKeyValues(node_key, dest_node_key);
+        String message = "storeKeyValue_"+successor_raw_key_values;
         return message;
     }
 
@@ -377,22 +380,40 @@ public final class MembershipUtils {
     }
 
     /* 
+        Returns a raw data string containing all key-values that
+        a node contains.
+    */
+    public static String getRawKeyValues(String node_key, String resp_node_key){
+        String key_values = "";
+        LinkedList<String> files = FileHandler.getDirectoryFiles("../global/"+ node_key + "/", "storage");
+        for(String file : files){
+            String value = FileHandler.readFile("../global/"+node_key+"/storage/", file);
+            key_values = key_values.concat(file+"+"+value);
+            key_values = key_values.concat("-");
+            FileHandler.deleteUnity("../global/"+node_key+"/storage/", file);
+        }
+        if(key_values.length() > 0) key_values = key_values.substring(0, key_values.length()-1);
+        return key_values;
+    }
+
+    /* 
         Returns a raw data string containing all key-values that a
         specific node, given its key on resp_node_key parameter, is
         responsible for.
     */
-    public static String getRawKeyValues(String node_key, String resp_node_key){
+    public static String getRawKeyValuesSuccessor(String node_key, String resp_node_key){
         String key_values = "";
-        LinkedList<String> files = FileHandler.getDirectoryFiles("../global"+ node_key + "/", "storage");
-        System.out.println("file bool" + files.isEmpty());
+        LinkedList<String> files = FileHandler.getDirectoryFiles("../global/"+ node_key + "/", "storage");
         for(String file : files){
+            System.out.println("comparison: " + resp_node_key.compareTo(file));
             if(resp_node_key.compareTo(file) >= 0){
-                String value = FileHandler.readFile("../global/"+node_key+"/storage/", file+".txt");
+                String value = FileHandler.readFile("../global/"+node_key+"/storage/", file);
                 key_values = key_values.concat(file+"+"+value);
                 key_values = key_values.concat("-");
+                FileHandler.deleteUnity("../global/"+node_key+"/storage/", file);
             }
         }
-        key_values = key_values.substring(0, key_values.length()-1);
+        if(key_values.length() > 0) key_values = key_values.substring(0, key_values.length()-1);
         return key_values;
     }
 }

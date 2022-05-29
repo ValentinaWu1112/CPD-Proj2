@@ -60,7 +60,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
     private NodeMulticastClient nmc;
     private NodeMulticastServer nms;
     private ThreadPoolExecutor executor;
-    private String last_joining_nodeid;
+    private volatile String last_joining_nodeid;
     MessageScout scout;
     /* 
         Keeps track of number of joinreq messages sent.
@@ -93,10 +93,15 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
                 ntcpc = new NodeTCPClient(this.target_node_id, "7999");
                 ntcpc.start();
                 try{
-                    ntcpc.sendTCPMessage(MembershipUtils.createMessage(tcp_ip, "memshipInfo", "TCP", ""));
+                    /* 
+                        TODO: bug in join operation where key doesnt travel to
+                        responsible node, the storekeyvlaue message is empty
+                        when it should contain keyvalues
+                    */
+                    ntcpc.sendTCPMessage(MembershipUtils.createMessage(tcp_ip, "memshipInfo", "TCP", "", -1));
                     String responsible_node = MembershipUtils.getResponsibleNode(target_node_id);
                     if(responsible_node != null && responsible_node.equals(tcp_ip)){
-                        ntcpc.sendTCPMessage(MembershipUtils.createMessage(tcp_ip, "storeKeyValue", "", target_node_id));
+                        ntcpc.sendTCPMessage(MembershipUtils.createMessage(tcp_ip, "storeKeyValue", "", target_node_id, 0));
                     }
                 } finally{
                     ntcpc.closeTCPConnection();
@@ -131,7 +136,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
                     if(joinreq_timeout_counter >= 3){
                         break;
                     }
-                    nmc.sendMulticastMessage(MembershipUtils.createMessage(tcp_ip, "joinReq", "", "")); 
+                    nmc.sendMulticastMessage(MembershipUtils.createMessage(tcp_ip, "joinReq", "", "", -1)); 
                     TimeUnit.SECONDS.sleep(2);
                     joinreq_timeout_counter++;
                 }
@@ -221,7 +226,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
                 ntcpc = new NodeTCPClient(this.target_node_id, "7999");
                 ntcpc.start();
                 try{
-                    ntcpc.sendTCPMessage(MembershipUtils.createMessage(tcp_ip, "getReturn", out, ""));
+                    ntcpc.sendTCPMessage(MembershipUtils.createMessage(tcp_ip, "getReturn", out, "", -1));
                     
                 } finally{
                     ntcpc.closeTCPConnection();
@@ -246,7 +251,6 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
         public void run(){
             try{
                 MembershipUtils.updateStorage(tcp_ip, store);
-
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -267,7 +271,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
                 ntcpc = new NodeTCPClient(this.target_node_id, "7999");
                 ntcpc.start();
                 try{
-                    ntcpc.sendTCPMessage(MembershipUtils.createMessage(tcp_ip, "deleteKey", key, ""));
+                    ntcpc.sendTCPMessage(MembershipUtils.createMessage(tcp_ip, "deleteKey", key, "", -1));
                 }
                 finally{
                     ntcpc.closeTCPConnection();
@@ -296,7 +300,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
                 ntcpc = new NodeTCPClient(this.target_node_id, "7999");
                 ntcpc.start();
                 try{
-                    ntcpc.sendTCPMessage(MembershipUtils.createMessage(tcp_ip, "putValue", key, value));
+                    ntcpc.sendTCPMessage(MembershipUtils.createMessage(tcp_ip, "putValue", key, value, -1));
                 }
                 finally{
                     ntcpc.closeTCPConnection();
@@ -324,8 +328,8 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
                 ntcpc = new NodeTCPClient(this.target_node_id, "7999");
                 ntcpc.start();
                 try{
-                    System.out.println("TCP: " + MembershipUtils.createMessage(tcp_ip, "getValue", key, ""));
-                    boolean v = ntcpc.sendTCPMessage(MembershipUtils.createMessage(tcp_ip, "getValue", key, ""));
+                    System.out.println("TCP: " + MembershipUtils.createMessage(tcp_ip, "getValue", key, "", -1));
+                    boolean v = ntcpc.sendTCPMessage(MembershipUtils.createMessage(tcp_ip, "getValue", key, "", -1));
                     System.out.println("ntcp get: " + v);
                 }
                 finally{
@@ -419,10 +423,9 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
             }
             else if(body_content[0].equals("getReturn")){
                 getValue=new String(body_content[1]);
-                System.out.println("body: " + body_content[1]);
-                System.out.println("getValue: " + getValue);
 ;            }
             else if(body_content[0].equals("storeKeyValue")){
+                if(body_content.length < 2) return;
                 executor.execute(new TaskStorageValue(message_header[1],body_content[1]));
             }
             return;
@@ -483,7 +486,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
             is ready before multicast message is sent.
         */
         while(!nmc.getUDPSocket()){}
-        /* 
+        /*
             After start listening for TCP connections, the node multicasts
             that it joined the group. This message causes the other cluster 
             nodes to, after a random time length, connect via TCP and transfer
@@ -507,7 +510,19 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
         MembershipUtils.updateCounter(this.tcp_ip);
         joinreq_timeout_counter = 0;
         received_memshipinfo_messages_counter = 0;
-        nmc.sendMulticastMessage(MembershipUtils.createMessage(this.tcp_ip, "leaveReq", "", ""));
+        String responsible_node = MembershipUtils.getResponsibleNode(tcp_ip);
+        if(!responsible_node.equals(tcp_ip)){
+            ntcpc = new NodeTCPClient(responsible_node, "7999");
+            ntcpc.start();
+            try{
+                ntcpc.sendTCPMessage(MembershipUtils.createMessage(tcp_ip, "storeKeyValue", "", responsible_node, 1));
+            }
+            finally{
+                ntcpc.closeTCPConnection();
+                ntcpc = null;
+            }
+        }
+        nmc.sendMulticastMessage(MembershipUtils.createMessage(this.tcp_ip, "leaveReq", "", "", -1));
         System.out.println("leaveMulticastGroup");
         nmc.setInGroup(0);
         nms.leaveMulticastGroup();

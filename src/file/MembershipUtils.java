@@ -113,28 +113,22 @@ public final class MembershipUtils {
     /* 
         Compares Log registrys. Returns 1 if current is more up to date, 2 otherwise. 
     */
-    public static int compareLogs(Map<String,String> current, Map<String,String> received){
-        /* 
-            Assuming that a larger Log means more up to date
-        */
+    /* public static int compareLogs(Map<String,String> current, Map<String,String> received){
+        //Assuming that a larger Log means more up to date
         if(received.size() < current.size()){
             return 1;
         }
         else if(received.size() > current.size()){
             return 2;
         }
-        /* 
-            If both have the same size, a counter score is required.
-            Incrementing by one current_score (or received_score) if the counter
-            of a specific id is higher.
-        */
+        //If both have the same size, a counter score is required.
+        //Incrementing by one current_score (or received_score) if the counter
+        //of a specific id is higher.
         else{
             int current_score = 0;
             int received_score = 0;
             for (Map.Entry<String,String> entry : current.entrySet()) {
-                /* 
-                    Counting only the matching Log registrys (very naive but whatever)
-                */
+                //Counting only the matching Log registrys (very naive but whatever)
                 if(received.containsKey(entry.getKey())){
                     int cur_current_log_counter = Integer.parseInt(current.get(entry.getKey()));
                     int cur_received_log_counter = Integer.parseInt(received.get(entry.getKey()));
@@ -145,28 +139,31 @@ public final class MembershipUtils {
                         received_score++;
                     }
                     else{
-                        /* 
-                            They equal so nothing is done
-                        */
+                        //They equal so nothing is done
                     }
                 }
             }
             return current_score > received_score ? 1 : 2;
         }
-    }
+    } */
 
     /* 
-        Rewrites Log if received is more up to date than current.
+        Rewrites Log to the received one. To ensure cluster consistency
+        when a node receives a memshipInfo message it will rewrite all
+        info it contains at that moment, this way when a node broadcasts
+        his current view of the cluster all other nodes will acquire that
+        same view.
+        Comparing logs is a nice idea to prevent stalled info but that would
+        cause nodes to have different cluster views, resulting in a very
+        complicated situation to manage when, for example, we need one single
+        cluster node to broadcast the memshipInfo (how would they all 'agree'
+        that a single node is broadcasting his info if they dont share the same
+        view? doesnt seem feasible).
     */
     public static boolean rewriteLog(String node_id, String raw_log){
         try {
             String node_key = Crypto.encodeValue(node_id);
-            String current_log = getRawLogs(node_key);
-            Map<String,String> current_log_map = toMap(current_log);
-            Map<String,String> received_log_map = toMap(raw_log);
-            if(compareLogs(current_log_map, received_log_map) == 2){
-                FileHandler.writeFile("../global/"+node_key+"/membership/", "log.txt", raw_log);
-            }
+            FileHandler.writeFile("../global/"+node_key+"/membership/", "log.txt", raw_log);
             return true;
         } catch (Exception e) {
             e.printStackTrace();

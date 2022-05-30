@@ -7,11 +7,16 @@
 - [x] Node filesystem structure
 - [x] Node file I/O
 - [x] RMI Server implementation
-- [ ] Node RMI task JOIN
-- [ ] Node RMI task LEAVE
+- [x] Node RMI task JOIN
+- [ ] Node RMI task JOIN with Replication
+- [x] Node RMI task LEAVE
+- [ ] Node RMI task LEAVE with Replication
 - [ ] Node RMI task GET 
+- [ ] Node RMI task GET with Replication
 - [ ] Node RMI task PUT
+- [ ] Node RMI task PUT with Replication
 - [ ] Node RMI task DELETE
+- [ ] Node RMI task DELETE with Replication
 - [x] SHA-256 Encode (ex.: file content -> hash key)
 
 #### How to execute:

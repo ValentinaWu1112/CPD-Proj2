@@ -402,8 +402,13 @@ public final class MembershipUtils {
         String key_values = "";
         LinkedList<String> files = FileHandler.getDirectoryFiles("../global/"+ node_key + "/", "storage");
         for(String file : files){
-            System.out.println("comparison: " + resp_node_key.compareTo(file));
-            if(resp_node_key.compareTo(file) >= 0){
+            /* 
+                Key-value is sent if file key is less than the responsible node key OR 
+                if the current holding node key is less the that specific key (this covers
+                case where non responsible node contains a key that it shouldn't because of, for example,
+                when theres only 2 nodes in the cluster and one of them leaves.)
+            */
+            if(resp_node_key.compareTo(file) >= 0 || node_key.compareTo(file) < 0){
                 String value = FileHandler.readFile("../global/"+node_key+"/storage/", file);
                 key_values = key_values.concat(file+"+"+value);
                 key_values = key_values.concat("-");

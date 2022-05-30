@@ -196,7 +196,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
 
         public void run(){
             try {
-                FileHandler.delete("../global/"+Crypto.encodeValue(tcp_ip)+"/storage/"+key+".txt");
+                FileHandler.delete("../global/"+Crypto.encodeValue(tcp_ip)+"/storage/"+key);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -214,7 +214,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
 
         public void run(){
             try {
-                String out = FileHandler.readFile("../global/"+Crypto.encodeValue(tcp_ip)+"/storage/", key+".txt");
+                String out = FileHandler.readFile("../global/"+Crypto.encodeValue(tcp_ip)+"/storage/", key);
                 ntcpc = new NodeTCPClient(this.target_node_id, "7999");
                 ntcpc.start();
                 try{
@@ -534,8 +534,8 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
     public String getValue(String key){
         try{
             System.out.println("get(" + key + ")");
-            if(FileHandler.isFile("../global/" + Crypto.encodeValue(tcp_ip) + "/storage/"+ key + ".txt")){
-                return FileHandler.readFile("../global/"+Crypto.encodeValue(tcp_ip) + "/storage/", key+".txt");
+            if(FileHandler.isFile("../global/" + Crypto.encodeValue(tcp_ip) + "/storage/"+ key)){
+                return FileHandler.readFile("../global/"+Crypto.encodeValue(tcp_ip) + "/storage/", key);
             }
             else{
                 executor.execute(new TaskGetValue(MembershipUtils.getResponsibleNodeGivenKey(tcp_ip, key),key));
@@ -559,8 +559,8 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
             System.out.println("putValue (" +  key + "," + value + ")");
             String nodeResp = MembershipUtils.getResponsibleNodeGivenKey(tcp_ip,key);
             if(nodeResp.equals(tcp_ip)){
-                FileHandler.createFile("../global/" + Crypto.encodeValue(tcp_ip) + "/storage/", key+".txt");
-                FileHandler.writeFile("../global/" + Crypto.encodeValue(tcp_ip) + "/storage/", key+".txt", value);
+                FileHandler.createFile("../global/" + Crypto.encodeValue(tcp_ip) + "/storage/", key);
+                FileHandler.writeFile("../global/" + Crypto.encodeValue(tcp_ip) + "/storage/", key, value);
             }
             else{
                 executor.execute(new TaskPutValue(nodeResp, key, value));
@@ -575,8 +575,8 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
     public boolean deleteKey(String key){
         try{
             System.out.println("delete (" + key + ")");
-            if(FileHandler.isFile("../global/" + Crypto.encodeValue(tcp_ip) + "/storage/"+ key + ".txt")){
-                return FileHandler.delete("../global/"+Crypto.encodeValue(tcp_ip) + "/storage/"+ key+".txt");
+            if(FileHandler.isFile("../global/" + Crypto.encodeValue(tcp_ip) + "/storage/"+ key)){
+                return FileHandler.delete("../global/"+Crypto.encodeValue(tcp_ip) + "/storage/"+ key);
             }
             else{
                 executor.execute(new TaskDeleteKey(MembershipUtils.getResponsibleNodeGivenKey(tcp_ip, key),key));

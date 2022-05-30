@@ -14,8 +14,8 @@ public final class MembershipUtils {
         for(String pair: pairs){
             String[] key_value = pair.split("\\+");
             if(!files.contains(key_value[0])){
-                FileHandler.createFile("../global/"+node_key+"/storage/", key_value[0]+".txt");
-                return FileHandler.writeFile("../global/"+node_key+"/storage/", key_value[0]+".txt", key_value[1]);
+                FileHandler.createFile("../global/"+node_key+"/storage/", key_value[0]);
+                return FileHandler.writeFile("../global/"+node_key+"/storage/", key_value[0], key_value[1]);
             } 
         }
         return false;
@@ -49,6 +49,7 @@ public final class MembershipUtils {
         for(String hm : hashed_members_list) {
             if(flag){
                 respondible_node_id =  hashed_members.get(hm);
+                break;
             }
             if(hm.equals(node_key)){
                 flag = true;
@@ -85,6 +86,7 @@ public final class MembershipUtils {
             for(int i=0; i<hashed_members_list.size(); i++){
                 if(key.compareTo(hashed_members_list.get(i)) <= 0){
                     responsible_node = hashed_members.get(hashed_members_list.get(i));
+                    break;
                 }
             }
             
@@ -325,9 +327,7 @@ public final class MembershipUtils {
     }
 
     public static String createStoreKeyValueMessage(String node_id, String dest_node_id, int store_flag){
-        String node_key = Crypto.encodeValue(node_id);
-        String dest_node_key = Crypto.encodeValue(dest_node_id);
-        String successor_raw_key_values = store_flag == 0 ? getRawKeyValuesSuccessor(node_key, dest_node_key) : getRawKeyValues(node_key, dest_node_key);
+        String successor_raw_key_values = store_flag == 0 ? getRawKeyValuesSuccessor(node_id, dest_node_id) : getRawKeyValues(node_id);
         String message = "storeKeyValue_"+successor_raw_key_values;
         return message;
     }
@@ -380,7 +380,8 @@ public final class MembershipUtils {
         Returns a raw data string containing all key-values that
         a node contains.
     */
-    public static String getRawKeyValues(String node_key, String resp_node_key){
+    public static String getRawKeyValues(String node_id){
+        String node_key = Crypto.encodeValue(node_id);
         String key_values = "";
         LinkedList<String> files = FileHandler.getDirectoryFiles("../global/"+ node_key + "/", "storage");
         for(String file : files){
@@ -398,17 +399,13 @@ public final class MembershipUtils {
         specific node, given its key on resp_node_key parameter, is
         responsible for.
     */
-    public static String getRawKeyValuesSuccessor(String node_key, String resp_node_key){
+    public static String getRawKeyValuesSuccessor(String node_id, String resp_node_id){
+        String node_key = Crypto.encodeValue(node_id);
+        String resp_node_key = Crypto.encodeValue(resp_node_id);
         String key_values = "";
         LinkedList<String> files = FileHandler.getDirectoryFiles("../global/"+ node_key + "/", "storage");
         for(String file : files){
-            /* 
-                Key-value is sent if file key is less than the responsible node key OR 
-                if the current holding node key is less the that specific key (this covers
-                case where non responsible node contains a key that it shouldn't because of, for example,
-                when theres only 2 nodes in the cluster and one of them leaves.)
-            */
-            if(resp_node_key.compareTo(file) >= 0 || node_key.compareTo(file) < 0){
+            if(getResponsibleNodeGivenKey(node_id, file).equals(resp_node_id)){
                 String value = FileHandler.readFile("../global/"+node_key+"/storage/", file);
                 key_values = key_values.concat(file+"+"+value);
                 key_values = key_values.concat("-");

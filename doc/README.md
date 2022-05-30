@@ -55,3 +55,7 @@ Here, the header contains, separated by the ':' character, the issuer of the mes
 
 #### DeleteKey Message
 ``` deleteKey_key ```
+
+### Messages processing
+
+In order to prevent clogged nodes, both nodes TCP and Multicast servers have a queue structure field. Everytime a node receives a message through this endpoints that message is pushed into the queue where it waits to be processed. A MessageScout thread is then responsible for constantly checking up on these queues, removing the messages from the queues and process them. After determining the type of message received, the MessageScout threads then passes the task specified in the message to a ThreadPoolExecutor which executes the passed task.

@@ -188,11 +188,9 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
     }
 
     class TaskReceiveDeleteKey implements Runnable{
-        private String target_node_id;
         private String key;
 
-        public TaskReceiveDeleteKey(String target_node_id, String key){
-            this.target_node_id = target_node_id;
+        public TaskReceiveDeleteKey(String key){
             this.key = key;
         }
 
@@ -234,11 +232,9 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
     }
 
     class TaskStorageValue implements Runnable{
-        private String target_node_id;
         private String store;
 
-        public TaskStorageValue(String target_node_id, String store){
-            this.target_node_id = target_node_id;
+        public TaskStorageValue(String store){
             this.store = store;
         }
 
@@ -420,7 +416,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
                 executor.execute(new TaskMemshipInfo(body_content[1], body_content[2]));
             }
             else if(body_content[0].equals("deleteKey")){
-                executor.execute(new TaskReceiveDeleteKey(message_header[1], body_content[1]));
+                executor.execute(new TaskReceiveDeleteKey(body_content[1]));
             }
             else if(body_content[0].equals("getValue")){
                 executor.execute(new TaskReceiveGetValue(message_header[1],body_content[1]));
@@ -432,7 +428,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
 ;            }
             else if(body_content[0].equals("storeKeyValue")){
                 if(body_content.length < 2) return;
-                executor.execute(new TaskStorageValue(message_header[1],body_content[1]));
+                executor.execute(new TaskStorageValue(body_content[1]));
             }
             return;
         }

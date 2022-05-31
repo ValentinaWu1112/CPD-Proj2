@@ -282,94 +282,73 @@ public final class MembershipUtils {
         return sb.toString();
     }
 
-    /* 
-        Creates any kind of message given the specified operation.
-
-        The protocol parameter is only used to distinguish memshipInfo 
-        messages, so when calling this method and the operation argument 
-        isn't 'memshipInfo' simply pass a dummy string, eg.: "", as the 
-        protocol argument value.
-
-        Identically to the protocol parameter, the dest_node_id parameter
-        is only used for storeKeyValue messages, so whenever protocol does 
-        not equal 'storeKeyValue' simply pass it as "".
-    */
-    public static String createMessage(String node_id, String operation, String protocol, String dest_node_id, int store_flag){
-        String message = "header:"+node_id+"#body:";
-        switch(operation){
-            case "joinReq":
-                message = message.concat(createJoinReqMessage(node_id));
-                break;
-            case "memshipInfo":
-                message = message.concat(createMembershipInfoMessage(node_id, protocol));
-                break;
-            case "storeKeyValue":
-                message = message.concat(createStoreKeyValueMessage(node_id, dest_node_id, store_flag));
-                break;
-            case "leaveReq":
-                message = message.concat(createLeaveReqMessage(node_id));
-                break;
-            case "deleteKey":
-                message = message.concat(createDeleteKeyMessage(protocol));
-                break;
-            case "getValue":
-                message = message.concat(createGetValueMessage(protocol));
-                break;
-            case "putValue":
-                message = message.concat(createPutValueMessage(protocol,dest_node_id));
-                break;
-            case "getReturn":
-                message = message.concat(createGetReturnMessage(protocol));
-                break;
-        }
-        
-        return message;
-    }
-
     public static String createJoinReqMessage(String node_id){
+        String message = "header:"+node_id+"#body:";
         String node_key = Crypto.encodeValue(node_id);
         String node_counter = FileHandler.readFile("../global/"+node_key+"/membership/", "counter.txt");
-        String message = "joinReq_"+node_counter;
+        message = message.concat("joinReq_"+node_counter);
         return message;
     }
     
-    public static String createDeleteKeyMessage(String key){
-        /*protocol has the value of the key */
-        return "deleteKey_"+key;
-    }
-
-    public static String createGetValueMessage(String key){
-        /*protocol has the value of the key */
-        return "getValue_"+key;
-    }
-
-    public static String createPutValueMessage(String key, String value){
-        /*protocol is the key and dest_node_id */
-        return "storeKeyValue_"+key+"+"+value;
-    }
-
-    public static String createGetReturnMessage(String value){
-        return "getReturn_"+value;
-    }
-
-    public static String createMembershipInfoMessage(String node_id, String protocol){
-        String node_key = Crypto.encodeValue(node_id);
-        String cluster_members = getRawClusterMembers(node_key);
-        String logs = getRawLogs(node_key);
-        String message = "memshipInfo"+protocol+"_"+cluster_members+"_"+logs;
+    public static String createDeleteKeyMessage(String node_id, String key){
+        String message = "header:"+node_id+"#body:";
+        message = message.concat("deleteKey_"+key);
         return message;
     }
 
-    public static String createStoreKeyValueMessage(String node_id, String dest_node_id, int store_flag){
-        String successor_raw_key_values = store_flag == 0 ? getRawKeyValuesSuccessor(node_id, dest_node_id) : getRawKeyValues(node_id);
-        String message = "storeKeyValue_"+successor_raw_key_values;
+    public static String createGetValueMessage(String node_id, String key){
+        String message = "header:"+node_id+"#body:";
+        message = message.concat("getValue_"+key);
+        return message;
+    }
+
+    public static String createPutValueMessage(String node_id, String key, String value){
+        String message = "header:"+node_id+"#body:";
+        message = message.concat("storeKeyValue_"+key+"+"+value);
+        return message;
+    }
+
+    public static String createGetReturnMessage(String node_id, String value){
+        String message = "header:"+node_id+"#body:";
+        message = message.concat("getReturn_"+value);
+        return message;
+    }
+
+    public static String createMembershipInfoMessage(String node_id, String protocol){
+        String message = "header:"+node_id+"#body:";
+        String node_key = Crypto.encodeValue(node_id);
+        String cluster_members = getRawClusterMembers(node_key);
+        String logs = getRawLogs(node_key);
+        message = message.concat("memshipInfo"+protocol+"_"+cluster_members+"_"+logs);
+        return message;
+    }
+
+    /* 
+        store_flag parameter: 0 - join, 1-leave, 2-replicas.
+        Param key_values is meant to be used to generate key_value message
+        on replicas propagation.
+    */
+    public static String createStoreKeyValueMessage(String node_id, String dest_node_id, int store_flag, String key_values){
+        String message = "header:"+node_id+"#body:";
+        String successor_raw_key_values = null;
+        if(store_flag == 0){
+            successor_raw_key_values = getRawKeyValuesSuccessor(node_id, dest_node_id);
+        }
+        else if(store_flag == 1){
+            successor_raw_key_values = getRawKeyValues(node_id);
+        }
+        else if(store_flag == 2){
+            successor_raw_key_values = key_values;
+        }
+        message = message.concat("storeKeyValue_"+successor_raw_key_values);
         return message;
     }
 
     public static String createLeaveReqMessage(String node_id){
+        String message = "header:"+node_id+"#body:";
         String node_key = Crypto.encodeValue(node_id);
         String node_counter = FileHandler.readFile("../global/"+node_key+"/membership/", "counter.txt");
-        String message = "leaveReq_"+node_counter;
+        message = message.concat("leaveReq_"+node_counter);
         return message;
     }
 

@@ -26,11 +26,11 @@ Since demo is executed in a single computer, global directory contains all infor
 
 
 ### Messages structure: 
-All messages will be encapsulated inside an universal wrap, used accross all kinds of messages:<br/>
+All messages will be encapsulated inside an universal wrap, used across all kinds of messages:<br/>
 
-``` header:nodeId body:joinMessage ```
+``` header:nodeId#body:joinMessage ```
 
-Here, the header contains, separated by the ':' character, the issuer of the message (the Id of the node that is sending the message), then, separated by a space character '\0', is the body. Identically shaped compared to the header, the body contains the actual message content. This message content varies depending on the message type. These types are explained bellow..
+Here, the header contains, separated by the ':' character, the issuer of the message (the Id of the node that is sending the message), then, separated by a hashtag character '#', is the body. Identically shaped compared to the header, the body contains the actual message content. This message content varies depending on the message type. These types are explained bellow..
 
 
 ### Message Types:

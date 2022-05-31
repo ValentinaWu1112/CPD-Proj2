@@ -10,6 +10,7 @@ import node.multicast.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Flow.Subscriber;
 import java.util.Random;
 import file.*;
 
@@ -54,7 +55,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
     private String tcp_ip;
     private int tcp_port;
     private NodeTCPServer ntcps;
-    private NodeTCPClient ntcpc;
+    private volatile NodeTCPClient ntcpc;
     private String multicast_ip;
     private int multicast_port;
     private NodeMulticastClient nmc;
@@ -90,13 +91,14 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
                 TimeUnit.SECONDS.sleep(rand.nextInt(3));
                 MembershipUtils.updateLog(tcp_ip, target_node_id.concat("-").concat(counter).concat(";"));
                 MembershipUtils.updateCluster(tcp_ip, target_node_id);
-                ntcpc = new NodeTCPClient(this.target_node_id, "7999");
+                while(ntcpc != null){}
+                ntcpc = new NodeTCPClient(this.target_node_id, Integer.toString(tcp_port));
                 ntcpc.start();
                 try{
                     ntcpc.sendTCPMessage(MembershipUtils.createMembershipInfoMessage(tcp_ip, "TCP"));
                     String responsible_node = MembershipUtils.getSuccessorNode(target_node_id);
                     if(responsible_node != null && responsible_node.equals(tcp_ip)){
-                        ntcpc.sendTCPMessage(MembershipUtils.createStoreKeyValueMessage(tcp_ip, target_node_id, 0, ""));
+                        ntcpc.sendTCPMessage(MembershipUtils.createStoreKeyValueMessage(tcp_ip, target_node_id, 0, "", false));
                     }
                 } finally{
                     ntcpc.closeTCPConnection();
@@ -215,7 +217,8 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
         public void run(){
             try {
                 String out = FileHandler.readFile("../global/"+Crypto.encodeValue(tcp_ip)+"/storage/", key);
-                ntcpc = new NodeTCPClient(this.target_node_id, "7999");
+                while(ntcpc != null){}
+                ntcpc = new NodeTCPClient(this.target_node_id, Integer.toString(tcp_port));
                 ntcpc.start();
                 try{
                     ntcpc.sendTCPMessage(MembershipUtils.createGetReturnMessage(tcp_ip, out));
@@ -237,14 +240,25 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
     */
     class TaskStorageValue implements Runnable{
         private String store;
+        //true for replicas propagation
+        private boolean replicas_flag;
 
-        public TaskStorageValue(String store){
+        public TaskStorageValue(String store, boolean replicas_flag){
             this.store = store;
+            this.replicas_flag = replicas_flag;
         }
 
         public void run(){
             try{
                 MembershipUtils.updateStorage(tcp_ip, store);
+                if(replicas_flag){
+                    String successor = MembershipUtils.getSuccessorNode(tcp_ip);
+                    String ancestor = MembershipUtils.getAncestorNode(tcp_ip);
+                    executor.execute(new TaskPropagateReplicas(successor, store));
+                    if(!successor.equals(ancestor)){
+                        executor.execute(new TaskPropagateReplicas(ancestor, store));
+                    }
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -262,7 +276,8 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
 
         public void run(){
             try{
-                ntcpc = new NodeTCPClient(this.target_node_id, "7999");
+                while(ntcpc != null){}
+                ntcpc = new NodeTCPClient(this.target_node_id, Integer.toString(tcp_port));
                 ntcpc.start();
                 try{
                     ntcpc.sendTCPMessage(MembershipUtils.createDeleteKeyMessage(tcp_ip, key));
@@ -291,10 +306,12 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
         }
 
         public void run(){
-            ntcpc = new NodeTCPClient(target_node_id, "7999");
+            while(ntcpc != null){}
+            System.out.println("STARTING TCP CONECTION TO PROPAGATE REPLICAS");
+            ntcpc = new NodeTCPClient(target_node_id, Integer.toString(tcp_port));
             ntcpc.start();
             try{
-                ntcpc.sendTCPMessage(MembershipUtils.createStoreKeyValueMessage(tcp_ip, target_node_id, 2, key_values));
+                ntcpc.sendTCPMessage(MembershipUtils.createStoreKeyValueMessage(tcp_ip, target_node_id, 2, key_values, true));
             }
             finally{
                 ntcpc.closeTCPConnection();
@@ -317,11 +334,12 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
         public void run(){
             try{
                 if(target_node_id.equals(tcp_ip)){
-                    executor.execute(new TaskStorageValue(key+"+"+value));
-                    executor.execute(new TaskPropagateReplicas(target_node_id, key+"+"+value));
+                    executor.execute(new TaskStorageValue(key+"+"+value, true));
                 }
                 else{
-                    ntcpc = new NodeTCPClient(this.target_node_id, "7999");
+                    while(ntcpc != null){}
+                    System.out.println("STARTING TCP CONECTION TO SEND PUT MESSAGE");
+                    ntcpc = new NodeTCPClient(this.target_node_id, Integer.toString(tcp_port));
                     ntcpc.start();
                     try{
                         ntcpc.sendTCPMessage(MembershipUtils.createPutValueMessage(tcp_ip, key, value));
@@ -336,7 +354,6 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
                 e.printStackTrace();
             }
         }
-
     }
 
     class TaskGetValue implements Runnable{
@@ -350,7 +367,8 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
 
         public void run(){
             try{
-                ntcpc = new NodeTCPClient(this.target_node_id, "7999");
+                while(ntcpc != null){}
+                ntcpc = new NodeTCPClient(this.target_node_id, Integer.toString(tcp_port));
                 ntcpc.start();
                 try{
                     ntcpc.sendTCPMessage(MembershipUtils.createGetValueMessage(tcp_ip, key));
@@ -462,7 +480,11 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
 ;            }
             else if(body_content[0].equals("storeKeyValue")){
                 if(body_content.length < 2) return;
-                executor.execute(new TaskStorageValue(body_content[1]));
+                executor.execute(new TaskStorageValue(body_content[1], true));
+            }
+            else if(body_content[0].equals("storeKeyValueReplica")){
+                if(body_content.length < 2) return;
+                executor.execute(new TaskStorageValue(body_content[1], false));
             }
             return;
         }
@@ -548,10 +570,11 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
         received_memshipinfo_messages_counter = 0;
         String responsible_node = MembershipUtils.getSuccessorNode(tcp_ip);
         if(!responsible_node.equals(tcp_ip)){
-            ntcpc = new NodeTCPClient(responsible_node, "7999");
+            while(ntcpc != null){}
+            ntcpc = new NodeTCPClient(responsible_node, Integer.toString(tcp_port));
             ntcpc.start();
             try{
-                ntcpc.sendTCPMessage(MembershipUtils.createStoreKeyValueMessage(tcp_ip, responsible_node, 1, ""));
+                ntcpc.sendTCPMessage(MembershipUtils.createStoreKeyValueMessage(tcp_ip, responsible_node, 1, "", false));
             }
             finally{
                 ntcpc.closeTCPConnection();

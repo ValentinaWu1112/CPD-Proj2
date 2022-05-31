@@ -63,4 +63,6 @@ In order to prevent clogged nodes, both nodes TCP and Multicast servers have a q
 
 ### Cluster Consistency
 
-In order to ensure cluster consistency, i.e, all nodes sharing the same cluster view at a given instant, at a constat rate, say 1 second, one of the nodes will broadcast its own view of the cluster making the others to update their view to what they just received. So, the choice mechanism of this single node has to be done through the.. 
+In order to ensure cluster consistency, i.e, all nodes sharing the same cluster view at a given instant, at a constat rate, say 1 second, one of the nodes will broadcast its own view of the cluster making the others to update their view to what they just received. So, the choice mechanism of this single node has to be done through the..
+
+## Replication

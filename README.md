@@ -13,8 +13,8 @@
 - [ ] Node RMI task LEAVE with Replication
 - [ ] Node RMI task GET 
 - [ ] Node RMI task GET with Replication
-- [ ] Node RMI task PUT
-- [ ] Node RMI task PUT with Replication
+- [x] Node RMI task PUT
+- [x] Node RMI task PUT with Replication
 - [ ] Node RMI task DELETE
 - [ ] Node RMI task DELETE with Replication
 - [x] SHA-256 Encode (ex.: file content -> hash key)

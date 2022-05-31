@@ -1,6 +1,6 @@
 # Project design decisions documentation (Report Helper)
 
-### File system structure
+## File system structure
 
 ```
 global/
@@ -24,6 +24,7 @@ global/
 
 Since demo is executed in a single computer, global directory contains all information kept by every node following the above structure.
 
+## Membership Service
 
 ### Messages structure: 
 All messages will be encapsulated inside an universal wrap, used across all kinds of messages:<br/>
@@ -58,4 +59,8 @@ Here, the header contains, separated by the ':' character, the issuer of the mes
 
 ### Messages processing
 
-In order to prevent clogged nodes, both nodes TCP and Multicast servers have a queue structure field that will serve as message buffers. Everytime a node receives a message through these endpoints that message is pushed into the queue where it waits to be processed. A MessageScout thread is then responsible for constantly checking up on these queues, removing the messages from the queues and process them. After determining the type of message received, the MessageScout thread then passes the task specified in the message to a ThreadPoolExecutor which executes the passed task. This way, in all conections, the node TCP listening thread (server) is only occupied during the message trip time.  
+In order to prevent clogged nodes, both nodes TCP and Multicast servers have a queue structure field that will serve as message buffers. Everytime a node receives a message through these endpoints that message is pushed into the queue where it waits to be processed. A MessageScout thread is then responsible for constantly checking up on these queues, removing the messages from the queues and process them. After determining the type of message received, the MessageScout thread then passes the task specified in the message to a ThreadPoolExecutor which executes the passed task. This way, in all conections, the node TCP listening thread (server) is only occupied during the message trip time.
+
+### Cluster Consistency
+
+In order to ensure cluster consistency, i.e, all nodes sharing the same cluster view at a given instant, at a constat rate, say 1 second, one of the nodes will broadcast its own view of the cluster making the others to update their view to what they just received. So, the choice mechanism of this single node has to be done through the.. 

@@ -94,7 +94,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
                 ntcpc.start();
                 try{
                     ntcpc.sendTCPMessage(MembershipUtils.createMessage(tcp_ip, "memshipInfo", "TCP", "", -1));
-                    String responsible_node = MembershipUtils.getResponsibleNode(target_node_id);
+                    String responsible_node = MembershipUtils.getSuccessorNode(target_node_id);
                     if(responsible_node != null && responsible_node.equals(tcp_ip)){
                         ntcpc.sendTCPMessage(MembershipUtils.createMessage(tcp_ip, "storeKeyValue", "", target_node_id, 0));
                     }
@@ -231,6 +231,10 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
         }
     }
 
+    /* 
+        Task responsible for storing a set of received
+        key-values.
+    */
     class TaskStorageValue implements Runnable{
         private String store;
 
@@ -274,6 +278,21 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
         }
     }
 
+    /* 
+        Task responsible to store received replicas.
+    */
+    class TaskStoreReplicas implements Runnable{
+        private String key_values;
+
+        public TaskStoreReplicas(String key_values){
+            this.key_values = key_values;
+        }
+
+        public void run(){
+            MembershipUtils.updateStorage(tcp_ip, key_values);
+        }
+    }
+
     class TaskPutValue implements Runnable{
         private String target_node_id;
         private String key;
@@ -289,12 +308,22 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
             try{
                 ntcpc = new NodeTCPClient(this.target_node_id, "7999");
                 ntcpc.start();
-                try{
-                    ntcpc.sendTCPMessage(MembershipUtils.createMessage(tcp_ip, "putValue", key, value, -1));
+                if(target_node_id.equals(tcp_ip)){
+                    FileHandler.createFile("../global/" + Crypto.encodeValue(tcp_ip) + "/storage/", key);
+                    FileHandler.writeFile("../global/" + Crypto.encodeValue(tcp_ip) + "/storage/", key, value);
+
+                    /* 
+                        TODO: Propagate replicas
+                    */
                 }
-                finally{
-                    ntcpc.closeTCPConnection();
-                    ntcpc = null;
+                else{
+                    try{
+                        ntcpc.sendTCPMessage(MembershipUtils.createMessage(tcp_ip, "putValue", key, value, -1));
+                    }
+                    finally{
+                        ntcpc.closeTCPConnection();
+                        ntcpc = null;
+                    }
                 }
 
             } catch (Exception e) {
@@ -512,7 +541,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
         MembershipUtils.updateCounter(this.tcp_ip);
         joinreq_timeout_counter = 0;
         received_memshipinfo_messages_counter = 0;
-        String responsible_node = MembershipUtils.getResponsibleNode(tcp_ip);
+        String responsible_node = MembershipUtils.getSuccessorNode(tcp_ip);
         if(!responsible_node.equals(tcp_ip)){
             ntcpc = new NodeTCPClient(responsible_node, "7999");
             ntcpc.start();
@@ -538,7 +567,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
                 return FileHandler.readFile("../global/"+Crypto.encodeValue(tcp_ip) + "/storage/", key);
             }
             else{
-                executor.execute(new TaskGetValue(MembershipUtils.getResponsibleNodeGivenKey(tcp_ip, key),key));
+                executor.execute(new TaskGetValue(MembershipUtils.getSuccessorNodeGivenKey(tcp_ip, key),key));
                 while(!scout.flagGet()){
                     System.out.println("false");
                 }
@@ -557,14 +586,8 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
     public boolean putValue(String key, String value){
         try {
             System.out.println("putValue (" +  key + "," + value + ")");
-            String nodeResp = MembershipUtils.getResponsibleNodeGivenKey(tcp_ip,key);
-            if(nodeResp.equals(tcp_ip)){
-                FileHandler.createFile("../global/" + Crypto.encodeValue(tcp_ip) + "/storage/", key);
-                FileHandler.writeFile("../global/" + Crypto.encodeValue(tcp_ip) + "/storage/", key, value);
-            }
-            else{
-                executor.execute(new TaskPutValue(nodeResp, key, value));
-            }
+            String nodeResp = MembershipUtils.getSuccessorNodeGivenKey(tcp_ip, key);
+            executor.execute(new TaskPutValue(nodeResp, key, value));
             return true;
         } catch (Exception e) {
             e.printStackTrace();
@@ -579,7 +602,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
                 return FileHandler.delete("../global/"+Crypto.encodeValue(tcp_ip) + "/storage/"+ key);
             }
             else{
-                executor.execute(new TaskDeleteKey(MembershipUtils.getResponsibleNodeGivenKey(tcp_ip, key),key));
+                executor.execute(new TaskDeleteKey(MembershipUtils.getSuccessorNodeGivenKey(tcp_ip, key),key));
             }
             return true;
         } catch (Exception e) {

@@ -22,6 +22,40 @@ public final class MembershipUtils {
     }
 
     /* 
+        Returns nodes ancestor.
+    */
+    public static String getAncestorNode(String node_id){
+        String node_key = Crypto.encodeValue(node_id);
+        LinkedList<String> members = loadClusterMembers(node_key);
+        if(members.size() == 0){
+            return null;
+        }
+        LinkedList<String> hashed_members_list = new LinkedList<>();
+        TreeMap<String,String> hashed_members = new TreeMap<>();
+        for(String member : members){
+            String hashed_member = Crypto.encodeValue(member);
+            hashed_members_list.add(hashed_member);
+            hashed_members.put(hashed_member, member);
+        }
+        Collections.sort(hashed_members_list);
+        boolean flag = false;
+        String respondible_node_id = null;
+        for(int i=hashed_members_list.size()-1; i>-1; i--){
+            if(flag){
+                respondible_node_id =  hashed_members.get(hashed_members_list.get(i));
+                break;
+            }
+            if(hashed_members_list.get(i).equals(node_key)){
+                flag = true;
+            }
+        }
+        if(respondible_node_id == null) respondible_node_id = hashed_members.get(hashed_members_list.get(hashed_members_list.size()-1));
+        return respondible_node_id;
+    }
+
+    /* 
+        TLDR: Returns nodes successor.
+
         Returns node that is responsible for some other node keys.
         The node_id param corresponds to the node we trying to find 
         the successor of, so, for example, if we want to get the
@@ -30,7 +64,7 @@ public final class MembershipUtils {
 
         TODO: optimize time complexity from linear to logarithmic search!
     */
-    public static String getResponsibleNode(String node_id){
+    public static String getSuccessorNode(String node_id){
         String node_key = Crypto.encodeValue(node_id);
         LinkedList<String> members = loadClusterMembers(node_key);
         if(members.size() == 0){
@@ -64,7 +98,7 @@ public final class MembershipUtils {
 
         TODO: optimize time complexity from linear to logarithmic search!
     */
-    public static String getResponsibleNodeGivenKey(String node_id, String key){
+    public static String getSuccessorNodeGivenKey(String node_id, String key){
         String node_key = Crypto.encodeValue(node_id);
         LinkedList<String> members = loadClusterMembers(node_key);
         LinkedList<String> hashed_members_list = new LinkedList<>();
@@ -401,11 +435,11 @@ public final class MembershipUtils {
     */
     public static String getRawKeyValuesSuccessor(String node_id, String resp_node_id){
         String node_key = Crypto.encodeValue(node_id);
-        String resp_node_key = Crypto.encodeValue(resp_node_id);
+        //String resp_node_key = Crypto.encodeValue(resp_node_id);
         String key_values = "";
         LinkedList<String> files = FileHandler.getDirectoryFiles("../global/"+ node_key + "/", "storage");
         for(String file : files){
-            if(getResponsibleNodeGivenKey(node_id, file).equals(resp_node_id)){
+            if(getSuccessorNodeGivenKey(node_id, file).equals(resp_node_id)){
                 String value = FileHandler.readFile("../global/"+node_key+"/storage/", file);
                 key_values = key_values.concat(file+"+"+value);
                 key_values = key_values.concat("-");

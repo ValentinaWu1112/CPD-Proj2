@@ -68,8 +68,6 @@ public class Client {
                     System.out.println("'" + operation + "' operation doesn't exist");
                     break;
             }
-            //response = stubRMIServerAPI.leaveMulticastGroup();
-            //System.out.println("leavemc - reponse should be false and it is: " + response);
         } catch (Exception e) {
             System.err.println("Client exception: " + e.toString());
             e.printStackTrace();

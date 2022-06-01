@@ -51,6 +51,7 @@ class ClusterNodeBrain extends Thread{
 
     public void run(){
         System.out.println("ClusterNodeBrain");
+        System.out.println("Node key: " + this.node_key);
         initNodeFileSystem();
         nrmis = new RMIServer(this.node_tcp_ip, this.node_tcp_port, this.node_multicast_ip, this.node_multicast_port, this.node_key);
         nrmis.start();

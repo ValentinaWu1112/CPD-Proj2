@@ -11,12 +11,12 @@
 - [ ] Node RMI task JOIN with Replication
 - [x] Node RMI task LEAVE
 - [ ] Node RMI task LEAVE with Replication
-- [ ] Node RMI task GET 
-- [ ] Node RMI task GET with Replication
+- [x] Node RMI task GET 
+- [x] Node RMI task GET with Replication
 - [x] Node RMI task PUT
 - [x] Node RMI task PUT with Replication
-- [ ] Node RMI task DELETE
-- [ ] Node RMI task DELETE with Replication
+- [x] Node RMI task DELETE
+- [x] Node RMI task DELETE with Replication
 - [x] SHA-256 Encode (ex.: file content -> hash key)
 
 #### How to execute:

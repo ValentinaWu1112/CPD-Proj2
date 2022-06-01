@@ -98,7 +98,7 @@ public final class MembershipUtils {
 
         TODO: optimize time complexity from linear to logarithmic search!
     */
-    public static String getSuccessorNodeGivenKey(String node_id, String key){
+    public static String getResponsibleNodeGivenKey(String node_id, String key){
         String node_key = Crypto.encodeValue(node_id);
         LinkedList<String> members = loadClusterMembers(node_key);
         LinkedList<String> hashed_members_list = new LinkedList<>();
@@ -423,7 +423,7 @@ public final class MembershipUtils {
         String key_values = "";
         LinkedList<String> files = FileHandler.getDirectoryFiles("../global/"+ node_key + "/", "storage");
         for(String file : files){
-            if(getSuccessorNodeGivenKey(node_id, file).equals(resp_node_id)){
+            if(getResponsibleNodeGivenKey(node_id, file).equals(resp_node_id)){
                 String value = FileHandler.readFile("../global/"+node_key+"/storage/", file);
                 key_values = key_values.concat(file+"+"+value);
                 key_values = key_values.concat("-");

@@ -3,6 +3,9 @@ package node.rmi;
 import java.rmi.registry.Registry;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
+import java.time.Duration;
+import java.time.Instant;
+
 import crypto.Crypto;
 import java.lang.Thread;
 import node.tcp.*;
@@ -595,16 +598,64 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
                 return FileHandler.readFile("../global/"+Crypto.encodeValue(tcp_ip) + "/storage/", key);
             }
             else{
-                executor.execute(new TaskGetValue(MembershipUtils.getSuccessorNodeGivenKey(tcp_ip, key),key));
+                String node_key = MembershipUtils.getSuccessorNodeGivenKey(tcp_ip, key);
+                boolean flagReplica = false;
+                executor.execute(new TaskGetValue(node_key,key));
+                Instant start = Instant.now();
                 while(!scout.flagGet()){
-                    System.out.println("false");
+                    Instant end = Instant.now();
+                    Duration timeElapsed = Duration.between(start, end);
+                    //System.out.println("duration: " + timeElapsed.toMillis());
+                    if(timeElapsed.toMillis()>=1000) {
+                        flagReplica = true;
+                        break;
+                    }
                 }
-                
-                String get = scout.getValue();
-                scout.resetFlagGet();
-                System.out.println("get: " + get + " flag: " + scout.flagGet());
-                return get;
+                if(!flagReplica){
+                    String get = scout.getValue();
+                    scout.resetFlagGet();
+                    return get;
+                }
+                else{
+                    flagReplica=false;
+                    executor.execute(new TaskGetValue(MembershipUtils.getSuccessorNode(node_key),key));
+                    start = Instant.now();
+                    while(!scout.flagGet()){
+                        Instant end = Instant.now();
+                        Duration timeElapsed = Duration.between(start, end);
+                        //System.out.println("duration: " + timeElapsed.toMillis());
+                        if(timeElapsed.toMillis()>=1000) {
+                            flagReplica = true;
+                            break;
+                        }
+                    }
+                    if(!flagReplica){
+                        String get = scout.getValue();
+                        scout.resetFlagGet();
+                        return get;
+                    }
+                    else{
+                        flagReplica=false;
+                        executor.execute(new TaskGetValue(MembershipUtils.getAncestorNode(node_key),key));
+                        start = Instant.now();
+                        while(!scout.flagGet()){
+                            Instant end = Instant.now();
+                            Duration timeElapsed = Duration.between(start, end);
+                            //System.out.println("duration: " + timeElapsed.toMillis());
+                            if(timeElapsed.toMillis()>=1000) {
+                                flagReplica = true;
+                                break;
+                            }
+                        } 
+                        if(!flagReplica){
+                            String get = scout.getValue();
+                            scout.resetFlagGet();
+                            return get;
+                        }
+                    }
+                }
             }
+            return null;
         } catch (Exception e) {
             e.printStackTrace();
             return null;

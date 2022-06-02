@@ -17,9 +17,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.Random;
 import file.*;
 
-/* 
+/*
     While RMIServer thread is responsible for receiving nodes info (communication addresses),
-    RMIServerBrain implements the API interface handling node tasks. The RMIServerBrain thread 
+    RMIServerBrain implements the API interface handling node tasks. The RMIServerBrain thread
     starts the Multicast and TCP 'server sides' since it needs access to these objects.
 */
 
@@ -65,18 +65,18 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
     private ThreadPoolExecutor executor;
     private volatile String last_joining_nodeid;
     MessageScout scout;
-    /* 
+    /*
         Keeps track of number of joinreq messages sent.
     */
     private int joinreq_timeout_counter;
-    /* 
-        Keeps track of number of memshipinfo messages received. 
+    /*
+        Keeps track of number of memshipinfo messages received.
     */
     private volatile int received_memshipinfo_messages_counter;
 
-    /* 
-        Task constituting the process of sending the 
-        current membership information to the joining node. 
+    /*
+        Task constituting the process of sending the
+        current membership information to the joining node.
     */
     class TaskJoinReq implements Runnable{
         private String target_node_id;
@@ -113,7 +113,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
     }
 
 
-    /* 
+    /*
         Task responsible for nodes join timeout mechanism.
     */
     class TaskJoinTimeoutHandler implements Runnable{
@@ -122,32 +122,32 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
 
         public void run(){
             try {
-                /* 
-                    Sending at maximum 3 joinReq messages. After that, 
+                /*
+                    Sending at maximum 3 joinReq messages. After that,
                     the number of 'received_memshipinfo_messages_counter' (rmmc)
                     determines (we hope) the number of nodes in the cluster on
-                    a range of [0,..,3], i.e, say 'rmmmc' == 2 after three 
-                    successfully sent joinReq messages, then we must assume theres 
+                    a range of [0,..,3], i.e, say 'rmmmc' == 2 after three
+                    successfully sent joinReq messages, then we must assume theres
                     only 3 nodes in the cluster (the joinReq issuer included).
                 */
                 while(received_memshipinfo_messages_counter < 3){
                     if(joinreq_timeout_counter >= 3){
                         break;
                     }
-                    nmc.sendMulticastMessage(MembershipUtils.createJoinReqMessage(tcp_ip)); 
+                    nmc.sendMulticastMessage(MembershipUtils.createJoinReqMessage(tcp_ip));
                     TimeUnit.SECONDS.sleep(2);
                     joinreq_timeout_counter++;
                 }
 
-                /* 
+                /*
                     The node's alone in the cluster.
                 */
                 if(received_memshipinfo_messages_counter == 0){
                     System.err.println("IM ALONE!");
-                    /* 
+                    /*
                         Since the node is alone in the cluster, he won't receive
                         any cluster information, so he creates his own containing
-                        only him. (yea, a node is a masculine character) 
+                        only him. (yea, a node is a masculine character)
                     */
                     MembershipUtils.updateLog(tcp_ip, tcp_ip.concat("-").concat(MembershipUtils.getRawCounter(Crypto.encodeValue((tcp_ip)))).concat(";"));
                     MembershipUtils.rewriteClusterMembers(tcp_ip, tcp_ip);
@@ -221,7 +221,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
                 ntcpc.start();
                 try{
                     ntcpc.sendTCPMessage(MembershipUtils.createGetReturnMessage(tcp_ip, out));
-                    
+
                 } finally{
                     ntcpc.closeTCPConnection();
                     ntcpc = null;
@@ -233,7 +233,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
         }
     }
 
-    /* 
+    /*
         Task responsible for storing a set of received
         key-values.
     */
@@ -261,12 +261,19 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
                     }
                 }
                 else if(leave_flag){
+                    try {
+                        Thread.sleep(300);
+                    } catch (InterruptedException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                    System.out.println("Processing replicas");
                     String successor = MembershipUtils.getSuccessorNode(tcp_ip);
                     String ancestor = MembershipUtils.getAncestorNode(tcp_ip);
-                    String message = MembershipUtils.getRawKeyValuesSuccessor(tcp_ip, successor);
+                    //System.out.println("sucessor:" + successor + " anscentor:" + ancestor);
+                    String message = MembershipUtils.getKeyValueOrigin(tcp_ip);
                     executor.execute(new TaskPropagateReplicas(successor, message));
                     if(!successor.equals(ancestor)){
-                        message = MembershipUtils.getRawKeyValuesSuccessor(tcp_ip, ancestor);
                         executor.execute(new TaskPropagateReplicas(ancestor, message));
                     }
                 }
@@ -336,7 +343,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
         }
     }
 
-    /* 
+    /*
         Task responsible to propagate replicas to adjacent nodes.
     */
     class TaskPropagateReplicas implements Runnable{
@@ -424,10 +431,10 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
         }
     }
 
-    /* 
-        Task constituting the process of receiving a 
+    /*
+        Task constituting the process of receiving a
         message containing the membership information and
-        updating the nodes view of the cluster. 
+        updating the nodes view of the cluster.
     */
     class TaskMemshipInfo implements Runnable{
         private String raw_cluster_members;
@@ -449,11 +456,11 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
         }
     }
 
-    /* 
+    /*
         Thread responsible for message scouting on Multicast and TCP servers.
         Both Multicast and TCP servers have a queue structure that contains all
-        still unprocessed received messages. The job of this thread is to process 
-        and push those messages from the queue to the executor. The executor will 
+        still unprocessed received messages. The job of this thread is to process
+        and push those messages from the queue to the executor. The executor will
         then execute the task specified in the message.
     */
     class MessageScout extends Thread{
@@ -527,12 +534,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
                 executor.execute(new TaskStorageValue(body_content[1], false, false));
             }
             else if(body_content[0].equals("storeKeyValueLeave")){
-                try {
-                    Thread.sleep(10);
-                } catch (InterruptedException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
+
                 executor.execute(new TaskStorageValue(body_content[1], false, true));
             }
             return;
@@ -568,11 +570,11 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
             return true;
         }
         System.out.println("joinMulticastGroup");
-        /* 
+        /*
             The node joins the group.
         */
         nms.joinMulticastGroup();
-        /* 
+        /*
             The node starts listening for TCP connections. It must know the
             current state of the cluster.
         */
@@ -580,7 +582,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
             ntcps = new NodeTCPServer(this.tcp_ip, this.tcp_port);
             ntcps.start();
         }
-        /* 
+        /*
             Multicast client is initialized, meaning the node is able to
             iteract within the cluster.
         */
@@ -588,14 +590,14 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
             nmc = new NodeMulticastClient(this.multicast_ip, this.multicast_port);
             nmc.start();
         }
-        /* 
+        /*
             Since threads run asynchronously, this makes sure UDP Socket
             is ready before multicast message is sent.
         */
         while(!nmc.getUDPSocket()){}
         /*
             After start listening for TCP connections, the node multicasts
-            that it joined the group. This message causes the other cluster 
+            that it joined the group. This message causes the other cluster
             nodes to, after a random time length, connect via TCP and transfer
             the current membership status, i.e, their most recent 32 membership
             log messages aswell as a list of the current membership members.
@@ -626,7 +628,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
             }
             finally{
                 ntcpc.closeTCPConnection();
-                ntcpc = null; 
+                ntcpc = null;
             }
         }
         nmc.sendMulticastMessage(MembershipUtils.createLeaveReqMessage(tcp_ip));
@@ -691,7 +693,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
                                 flagReplica = true;
                                 break;
                             }
-                        } 
+                        }
                         if(!flagReplica){
                             String get = scout.getValue();
                             scout.resetFlagGet();
@@ -739,9 +741,9 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
 
     public void run() {
         System.out.println("RMIServerBrain");
-        /* 
-            Although the Multicast Server is initialized the moment the node is created, 
-            it is not able to interact with the cluster, it must join the group first. 
+        /*
+            Although the Multicast Server is initialized the moment the node is created,
+            it is not able to interact with the cluster, it must join the group first.
             This could also be done when the node joins the cluster group, but (i think)
             it results in a lighter JOIN operation.
         */

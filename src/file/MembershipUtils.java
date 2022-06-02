@@ -9,19 +9,19 @@ public final class MembershipUtils {
     public static boolean updateStorage(String node_id, String store){
         String node_key = Crypto.encodeValue(node_id);
         LinkedList<String> files = FileHandler.getDirectoryFiles("../global/"+ node_key + "/", "storage");
-        
+
         String[] pairs = store.split("-");
         for(String pair: pairs){
             String[] key_value = pair.split("\\+");
             if(!files.contains(key_value[0])){
                 FileHandler.createFile("../global/"+node_key+"/storage/", key_value[0]);
                 return FileHandler.writeFile("../global/"+node_key+"/storage/", key_value[0], key_value[1]);
-            } 
+            }
         }
         return false;
     }
 
-    /* 
+    /*
         Returns nodes ancestor.
     */
     public static String getAncestorNode(String node_id){
@@ -53,14 +53,14 @@ public final class MembershipUtils {
         return respondible_node_id;
     }
 
-    /* 
+    /*
         TLDR: Returns nodes successor.
 
         Returns node that is responsible for some other node keys.
-        The node_id param corresponds to the node we trying to find 
+        The node_id param corresponds to the node we trying to find
         the successor of, so, for example, if we want to get the
         successor of the node with id 1, simply call this method with
-        1 as an argument. 
+        1 as an argument.
 
         TODO: optimize time complexity from linear to logarithmic search!
     */
@@ -93,7 +93,7 @@ public final class MembershipUtils {
         return respondible_node_id;
     }
 
-    /* 
+    /*
         Returns responsible node given a file key.
 
         TODO: optimize time complexity from linear to logarithmic search!
@@ -123,7 +123,7 @@ public final class MembershipUtils {
                     break;
                 }
             }
-            
+
             if(responsible_node == null) responsible_node = hashed_members.get(hashed_members_list.get(0));
             return responsible_node;
         }
@@ -135,19 +135,19 @@ public final class MembershipUtils {
     public static boolean updateCounter(String node_id){
         String node_key = Crypto.encodeValue(node_id);
         String counter = getRawCounter(node_key);
-        
+
         int ret = 0;
         if(counter.equals("")) ret = 0;
         else {
             ret = Integer.parseInt(counter);
             ret++;
         }
-        
+
         return FileHandler.writeFile("../global/".concat(node_key).concat("/membership"), "/counter.txt", Integer.toString(ret));
     }
 
-    /* 
-        Compares Log registrys. Returns 1 if current is more up to date, 2 otherwise. 
+    /*
+        Compares Log registrys. Returns 1 if current is more up to date, 2 otherwise.
     */
     /* public static int compareLogs(Map<String,String> current, Map<String,String> received){
         //Assuming that a larger Log means more up to date
@@ -183,7 +183,7 @@ public final class MembershipUtils {
         }
     } */
 
-    /* 
+    /*
         Rewrites Log to the received one. To ensure cluster consistency
         when a node receives a memshipInfo message it will rewrite all
         info it contains at that moment, this way when a node broadcasts
@@ -226,7 +226,7 @@ public final class MembershipUtils {
         return FileHandler.writeFile("../global/"+node_key+"/membership/", "log.txt", MaptoString(logs));
     }
 
-    /* 
+    /*
         Overwrites cluster members list to whats given on 'raw_cluster_members' argument.
         This method differs from updateCluster method, since it rewrites everything in the file
         while updateCluster simply add or remove the given member passed as an argument.
@@ -289,7 +289,7 @@ public final class MembershipUtils {
         message = message.concat("joinReq_"+node_counter);
         return message;
     }
-    
+
     public static String createDeleteKeyMessage(String node_id, String key){
         String message = "header:"+node_id+"#body:";
         message = message.concat("deleteKey_"+key);
@@ -323,7 +323,7 @@ public final class MembershipUtils {
         return message;
     }
 
-    /* 
+    /*
         store_flag parameter: 0 - join, 1-leave, 2-replicas.
         Param key_values is meant to be used to generate key_value message
         on replicas propagation.
@@ -374,7 +374,7 @@ public final class MembershipUtils {
             //System.out.println("member: " + cluster_members_array[i]);
             cluster_members.add(cluster_members_array[i]);
         }
-        Collections.sort(cluster_members);  
+        Collections.sort(cluster_members);
         return cluster_members;
     }
 
@@ -397,7 +397,7 @@ public final class MembershipUtils {
         return raw_counter;
     }
 
-    /* 
+    /*
         Returns a raw data string containing all key-values that
         a node contains.
     */
@@ -415,7 +415,24 @@ public final class MembershipUtils {
         return key_values;
     }
 
-    /* 
+    public static String getKeyValueOrigin(String node_id){
+      String node_key = Crypto.encodeValue(node_id);
+      String key_values = "";
+      LinkedList<String> files = FileHandler.getDirectoryFiles("../global/"+ node_key + "/", "storage");
+      for(String file : files){
+          if(getResponsibleNodeGivenKey(node_id, file).equals(node_id)){
+              String value = FileHandler.readFile("../global/"+node_key+"/storage/", file);
+              key_values = key_values.concat(file+"+"+value);
+              key_values = key_values.concat("-");
+
+          }
+      }
+      //System.out.println("key_value Leave: " + key_values);
+      if(key_values.length() > 0) key_values = key_values.substring(0, key_values.length()-1);
+      return key_values;
+    }
+
+    /*
         Returns a raw data string containing all key-values that a
         specific node, given its key on resp_node_key parameter, is
         responsible for.

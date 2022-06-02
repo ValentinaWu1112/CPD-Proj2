@@ -8,10 +8,10 @@
 - [x] Node file I/O
 - [x] RMI Server implementation
 - [x] Node RMI task JOIN
-- [ ] Node RMI task JOIN with Replication
+- [x] Node RMI task JOIN with Replication
 - [x] Node RMI task LEAVE
-- [ ] Node RMI task LEAVE with Replication
-- [x] Node RMI task GET 
+- [x] Node RMI task LEAVE with Replication
+- [x] Node RMI task GET
 - [x] Node RMI task GET with Replication
 - [x] Node RMI task PUT
 - [x] Node RMI task PUT with Replication
@@ -30,7 +30,7 @@
         ./startadd 127.0.0.1
         java node/ClusterNode 224.0.0.1 6666 127.0.0.1 7999
 
-    Interact with nodes: 
+    Interact with nodes:
         java client/Client 127.0.0.1 join
 
 #### Crypto class usage:

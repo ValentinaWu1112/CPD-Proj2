@@ -26,7 +26,7 @@ Since demo is executed in a single computer, global directory contains all infor
 
 ## Membership Service
 
-### Messages structure: 
+### Messages structure:
 All messages will be encapsulated inside an universal wrap, used across all kinds of messages:<br/>
 
 ``` header:nodeId#body:joinMessage ```
@@ -39,7 +39,7 @@ Here, the header contains, separated by the ':' character, the issuer of the mes
 #### JoinReq Message (the message the node broadcasts when it joins) [UDP]
 ``` joinReq_counter ```
 
-#### Membership Information Message (the message a node sends to the joining node / the message one cluster node broadcasts every second) [TCP & UDP] 
+#### Membership Information Message (the message a node sends to the joining node / the message one cluster node broadcasts every second) [TCP & UDP]
 ``` memshipInfoUDP_nodeid1-nodeid2_nodeid1-counter1;nodeid2-counter2; ```<br/>
 ``` memshipInfoTCP_nodeid1-nodeid2_nodeid1-counter1;nodeid2-counter2; ```<br/>
 - Since the node stops processing memshipInfo messages, sent via TCP, after receiving 3 of them, this distinction is necessary. memshipInfoUDP messages are always recevied&processed while memshipInfoTCP might not be processed depending on how many it has received.
@@ -51,6 +51,7 @@ Here, the header contains, separated by the ':' character, the issuer of the mes
 ``` storeKeyValue_key1+value1-key2+value2 ```
 ``` storeKeyValueReplica_key1+value1-key2+value2 ```
 ``` storeKeyValueLeave_key1+value1-key2+value2 ```
+``` storeKeyValueJoin_key1+value1-key2+value2 ```
 
 #### GetValue Message
 ``` getValue_key ```
@@ -58,6 +59,7 @@ Here, the header contains, separated by the ':' character, the issuer of the mes
 
 #### DeleteKey Message
 ``` deleteKey_key ```
+``` deleteKeyValue ``` associate with storeKeyValueJoin
 
 ### Messages processing
 

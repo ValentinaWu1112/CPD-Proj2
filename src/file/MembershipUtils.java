@@ -296,6 +296,12 @@ public final class MembershipUtils {
         return message;
     }
 
+    public static String createDeleteKeyValueMessage(String node_id, String KeyValue){
+      String message = "header:"+node_id+"#body:";
+      message = message.concat("deleteKeyValue_"+KeyValue);
+      return message;
+    }
+
     public static String createGetValueMessage(String node_id, String key){
         String message = "header:"+node_id+"#body:";
         message = message.concat("getValue_"+key);
@@ -341,7 +347,7 @@ public final class MembershipUtils {
             successor_raw_key_values = key_values;
         }
         if(message_flag==0){
-            message = message.concat("storeKeyValue_"+successor_raw_key_values);
+            message = message.concat("storeKeyValueJoin_"+successor_raw_key_values);
         }
         else if(message_flag==1){
             message = message.concat("storeKeyValueReplica_"+successor_raw_key_values);
@@ -448,6 +454,12 @@ public final class MembershipUtils {
                 key_values = key_values.concat(file+"+"+value);
                 key_values = key_values.concat("-");
                 FileHandler.deleteUnity("../global/"+node_key+"/storage/", file);
+            }
+            else if (node_key.compareTo(file)<0){
+              String value = FileHandler.readFile("../global/"+node_key+"/storage/", file);
+              key_values = key_values.concat(file+"+"+value);
+              key_values = key_values.concat("-");
+              FileHandler.deleteUnity("../global/"+node_key+"/storage/", file);
             }
         }
         if(key_values.length() > 0) key_values = key_values.substring(0, key_values.length()-1);

@@ -49,6 +49,8 @@ Here, the header contains, separated by the ':' character, the issuer of the mes
 
 #### StoreKeyValue Message (the message a node sends to other node containing key-values) [TCP]
 ``` storeKeyValue_key1+value1-key2+value2 ```
+``` storeKeyValueReplica_key1+value1-key2+value2 ```
+``` storeKeyValueLeave_key1+value1-key2+value2 ```
 
 #### GetValue Message
 ``` getValue_key ```

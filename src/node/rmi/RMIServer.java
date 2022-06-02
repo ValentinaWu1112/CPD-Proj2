@@ -617,12 +617,12 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
         MembershipUtils.updateCounter(this.tcp_ip);
         joinreq_timeout_counter = 0;
         received_memshipinfo_messages_counter = 0;
-        String responsible_node = MembershipUtils.getSuccessorNode(tcp_ip);
-        if(!responsible_node.equals(tcp_ip)){
-            NodeTCPClient ntcpc = new NodeTCPClient(responsible_node, Integer.toString(tcp_port));
+        String successor_node = MembershipUtils.getSuccessorNode(tcp_ip);
+        if(!successor_node.equals(tcp_ip)){
+            NodeTCPClient ntcpc = new NodeTCPClient(successor_node, Integer.toString(tcp_port));
             ntcpc.start();
             try{
-                ntcpc.sendTCPMessage(MembershipUtils.createStoreKeyValueMessage(tcp_ip, responsible_node, 1, "", 2));
+                ntcpc.sendTCPMessage(MembershipUtils.createStoreKeyValueMessage(tcp_ip, successor_node, 1, "", 2));
             }
             finally{
                 ntcpc.closeTCPConnection();

@@ -13,7 +13,7 @@ import node.multicast.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.Flow.Subscriber;
+//import java.util.concurrent.Flow.Subscriber;
 import java.util.Random;
 import file.*;
 
@@ -99,7 +99,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
                     ntcpc.sendTCPMessage(MembershipUtils.createMembershipInfoMessage(tcp_ip, "TCP"));
                     String responsible_node = MembershipUtils.getSuccessorNode(target_node_id);
                     if(responsible_node != null && responsible_node.equals(tcp_ip)){
-                        ntcpc.sendTCPMessage(MembershipUtils.createStoreKeyValueMessage(tcp_ip, target_node_id, 0, "", false));
+                        ntcpc.sendTCPMessage(MembershipUtils.createStoreKeyValueMessage(tcp_ip, target_node_id, 0, "", 0));
                     }
                 } finally{
                     ntcpc.closeTCPConnection();
@@ -241,10 +241,12 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
         private String store;
         //true for replicas propagation
         private boolean replicas_flag;
+        private boolean leave_flag;
 
-        public TaskStorageValue(String store, boolean replicas_flag){
+        public TaskStorageValue(String store, boolean replicas_flag, boolean leave_flag){
             this.store = store;
             this.replicas_flag = replicas_flag;
+            this.leave_flag = leave_flag;
         }
 
         public void run(){
@@ -256,6 +258,16 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
                     executor.execute(new TaskPropagateReplicas(successor, store));
                     if(!successor.equals(ancestor)){
                         executor.execute(new TaskPropagateReplicas(ancestor, store));
+                    }
+                }
+                else if(leave_flag){
+                    String successor = MembershipUtils.getSuccessorNode(tcp_ip);
+                    String ancestor = MembershipUtils.getAncestorNode(tcp_ip);
+                    String message = MembershipUtils.getRawKeyValuesSuccessor(tcp_ip, successor);
+                    executor.execute(new TaskPropagateReplicas(successor, message));
+                    if(!successor.equals(ancestor)){
+                        message = MembershipUtils.getRawKeyValuesSuccessor(tcp_ip, ancestor);
+                        executor.execute(new TaskPropagateReplicas(ancestor, message));
                     }
                 }
             } catch (Exception e) {
@@ -341,7 +353,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
             NodeTCPClient ntcpc = new NodeTCPClient(target_node_id, Integer.toString(tcp_port));
             ntcpc.start();
             try{
-                ntcpc.sendTCPMessage(MembershipUtils.createStoreKeyValueMessage(tcp_ip, target_node_id, 2, key_values, true));
+                ntcpc.sendTCPMessage(MembershipUtils.createStoreKeyValueMessage(tcp_ip, target_node_id, 2, key_values, 1));
             }
             finally{
                 ntcpc.closeTCPConnection();
@@ -364,7 +376,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
         public void run(){
             try{
                 if(target_node_id.equals(tcp_ip)){
-                    executor.execute(new TaskStorageValue(key+"+"+value, true));
+                    executor.execute(new TaskStorageValue(key+"+"+value, true,false));
                 }
                 else{
                     System.out.println("STARTING TCP CONECTION TO SEND PUT MESSAGE");
@@ -508,11 +520,20 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
 ;            }
             else if(body_content[0].equals("storeKeyValue")){
                 if(body_content.length < 2) return;
-                executor.execute(new TaskStorageValue(body_content[1], true));
+                executor.execute(new TaskStorageValue(body_content[1], true, false));
             }
             else if(body_content[0].equals("storeKeyValueReplica")){
                 if(body_content.length < 2) return;
-                executor.execute(new TaskStorageValue(body_content[1], false));
+                executor.execute(new TaskStorageValue(body_content[1], false, false));
+            }
+            else if(body_content[0].equals("storeKeyValueLeave")){
+                try {
+                    Thread.sleep(10);
+                } catch (InterruptedException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+                executor.execute(new TaskStorageValue(body_content[1], false, true));
             }
             return;
         }
@@ -601,11 +622,11 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
             NodeTCPClient ntcpc = new NodeTCPClient(responsible_node, Integer.toString(tcp_port));
             ntcpc.start();
             try{
-                ntcpc.sendTCPMessage(MembershipUtils.createStoreKeyValueMessage(tcp_ip, responsible_node, 1, "", false));
+                ntcpc.sendTCPMessage(MembershipUtils.createStoreKeyValueMessage(tcp_ip, responsible_node, 1, "", 2));
             }
             finally{
                 ntcpc.closeTCPConnection();
-                ntcpc = null;
+                ntcpc = null; 
             }
         }
         nmc.sendMulticastMessage(MembershipUtils.createLeaveReqMessage(tcp_ip));

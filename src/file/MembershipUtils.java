@@ -328,7 +328,7 @@ public final class MembershipUtils {
         Param key_values is meant to be used to generate key_value message
         on replicas propagation.
     */
-    public static String createStoreKeyValueMessage(String node_id, String dest_node_id, int store_flag, String key_values, boolean rep_flag){
+    public static String createStoreKeyValueMessage(String node_id, String dest_node_id, int store_flag, String key_values, int message_flag){
         String message = "header:"+node_id+"#body:";
         String successor_raw_key_values = null;
         if(store_flag == 0){
@@ -340,11 +340,14 @@ public final class MembershipUtils {
         else if(store_flag == 2){
             successor_raw_key_values = key_values;
         }
-        if(!rep_flag){
+        if(message_flag==0){
             message = message.concat("storeKeyValue_"+successor_raw_key_values);
         }
-        else{
+        else if(message_flag==1){
             message = message.concat("storeKeyValueReplica_"+successor_raw_key_values);
+        }
+        else if(message_flag==2){
+            message = message.concat("storeKeyValueLeave_" + successor_raw_key_values);
         }
         return message;
     }

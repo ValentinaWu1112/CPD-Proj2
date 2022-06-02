@@ -97,8 +97,8 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
                 ntcpc.start();
                 try{
                     ntcpc.sendTCPMessage(MembershipUtils.createMembershipInfoMessage(tcp_ip, "TCP"));
-                    String responsible_node = MembershipUtils.getSuccessorNode(target_node_id);
-                    if(responsible_node != null && responsible_node.equals(tcp_ip)){
+                    String successor_node = MembershipUtils.getSuccessorNode(target_node_id);
+                    if(successor_node != null && successor_node.equals(tcp_ip)){
                         ntcpc.sendTCPMessage(MembershipUtils.createStoreKeyValueMessage(tcp_ip, target_node_id, 0, "", false));
                     }
                 } finally{
@@ -596,12 +596,12 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
         MembershipUtils.updateCounter(this.tcp_ip);
         joinreq_timeout_counter = 0;
         received_memshipinfo_messages_counter = 0;
-        String responsible_node = MembershipUtils.getSuccessorNode(tcp_ip);
-        if(!responsible_node.equals(tcp_ip)){
-            NodeTCPClient ntcpc = new NodeTCPClient(responsible_node, Integer.toString(tcp_port));
+        String successor_node = MembershipUtils.getSuccessorNode(tcp_ip);
+        if(!successor_node.equals(tcp_ip)){
+            NodeTCPClient ntcpc = new NodeTCPClient(successor_node, Integer.toString(tcp_port));
             ntcpc.start();
             try{
-                ntcpc.sendTCPMessage(MembershipUtils.createStoreKeyValueMessage(tcp_ip, responsible_node, 1, "", false));
+                ntcpc.sendTCPMessage(MembershipUtils.createStoreKeyValueMessage(tcp_ip, successor_node, 1, "", false));
             }
             finally{
                 ntcpc.closeTCPConnection();

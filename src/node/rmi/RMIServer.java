@@ -267,14 +267,16 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
                         // TODO Auto-generated catch block
                         e.printStackTrace();
                     }
-                    System.out.println("Processing replicas");
                     String successor = MembershipUtils.getSuccessorNode(tcp_ip);
                     String ancestor = MembershipUtils.getAncestorNode(tcp_ip);
                     //System.out.println("sucessor:" + successor + " anscentor:" + ancestor);
                     String message = MembershipUtils.getKeyValueOrigin(tcp_ip);
-                    executor.execute(new TaskPropagateReplicas(successor, message));
-                    if(!successor.equals(ancestor)){
-                        executor.execute(new TaskPropagateReplicas(ancestor, message));
+                    if(message.length()>0){
+                      System.out.println("Processing replicas");
+                      executor.execute(new TaskPropagateReplicas(successor, message));
+                      if(!successor.equals(ancestor)){
+                          executor.execute(new TaskPropagateReplicas(ancestor, message));
+                      }
                     }
                 }
             } catch (Exception e) {

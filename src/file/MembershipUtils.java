@@ -8,9 +8,10 @@ public final class MembershipUtils {
 
     public static String getNodeUpdate(String node_id){
       String node_key = Crypto.encodeValue(node_id);
-      String cluster_members= getRawClusterMembers(node_key);
-      String[] members = cluster_members.split("-");
-      return members[members.length - 1];
+      String log= getRawLogs(node_key);
+      String[] logs = log.split(";");
+      String[] ret = logs[logs.length -1].split("-");
+      return ret[0];
     }
 
     public static boolean updateStorage(String node_id, String store){

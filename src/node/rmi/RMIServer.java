@@ -848,10 +848,11 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
           try{
             while (true){
               TimeUnit.SECONDS.sleep(1);
-              System.out.println("Update Membership 1 sec");
+
               String nodeUpdate = MembershipUtils.getNodeUpdate(tcp_ip);
               if(nodeUpdate.equals(tcp_ip)){
-                nmc.sendMulticastMessage(MembershipUtils.createMembershipInfoMessage(tcp_ip, "TCP"));
+                System.out.println("Update Membership 1 sec");
+                nmc.sendMulticastMessage(MembershipUtils.createMembershipInfoMessage(tcp_ip, "UDP"));
               }
             }
           }catch (Exception e) {

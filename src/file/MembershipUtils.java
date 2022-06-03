@@ -200,6 +200,12 @@ public final class MembershipUtils {
         try {
             String node_key = Crypto.encodeValue(node_id);
             FileHandler.writeFile("../global/"+node_key+"/membership/", "log.txt", raw_log);
+            String raw_cluster_members = "";
+            String[] processed_log = raw_log.split(";");
+            for(String log_unit : processed_log){
+                raw_cluster_members = raw_cluster_members.concat(log_unit.split("-")[0]+"-");
+            }
+            rewriteClusterMembers(node_id, raw_cluster_members.substring(0, raw_cluster_members.length()-1));
             return true;
         } catch (Exception e) {
             e.printStackTrace();

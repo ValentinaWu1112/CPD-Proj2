@@ -93,7 +93,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
                 TimeUnit.SECONDS.sleep(rand.nextInt(3));
                 MembershipUtils.updateLog(tcp_ip, target_node_id.concat("-").concat(counter).concat(";"));
                 MembershipUtils.updateCluster(tcp_ip, target_node_id);
-                String message = MembershipUtils.createStoreKeyValueMessage(tcp_ip, target_node_id, 0, "", 0)
+                String message = MembershipUtils.createStoreKeyValueMessage(tcp_ip, target_node_id, 0, "", 0);
                 if(message.length()>0){
                     NodeTCPClient ntcpc = new NodeTCPClient(this.target_node_id, Integer.toString(tcp_port));
                     ntcpc.start();
@@ -101,7 +101,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
                         ntcpc.sendTCPMessage(MembershipUtils.createMembershipInfoMessage(tcp_ip, "TCP"));
                         String responsible_node = MembershipUtils.getSuccessorNode(target_node_id);
                         if(responsible_node != null && responsible_node.equals(tcp_ip)){
-                            ntcpc.sendTCPMessage();
+                            ntcpc.sendTCPMessage(MembershipUtils.createStoreKeyValueMessage(tcp_ip, target_node_id, 0, "", 0));
                         }
                     } finally{
                         ntcpc.closeTCPConnection();
@@ -497,7 +497,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
         public void run(){
             try {
                 received_memshipinfo_messages_counter++;
-                MembershipUtils.rewriteClusterMembers(tcp_ip, raw_cluster_members);
+                //MembershipUtils.rewriteClusterMembers(tcp_ip, raw_cluster_members);
                 MembershipUtils.rewriteLog(tcp_ip, raw_logs);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -583,12 +583,15 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
                 executor.execute(new TaskStorageValue(body_content[1], false, false,false));
             }
             else if(body_content[0].equals("storeKeyValueLeave")){
+                if(body_content.length < 2) return;
                 executor.execute(new TaskStorageValue(body_content[1], false, true,false));
             }
             else if(body_content[0].equals("storeKeyValueJoin")){
+                if(body_content.length < 2) return;
                 executor.execute(new TaskStorageValue(body_content[1], false, false,true));
             }
             else if(body_content[0].equals("deleteKeyValue")){
+                if(body_content.length < 2) return;
                 executor.execute(new TaskReceiveDeleteKey(body_content[1],true));
             }
             return;

@@ -67,6 +67,7 @@ public final class MembershipUtils {
     public static String getSuccessorNode(String node_id){
         String node_key = Crypto.encodeValue(node_id);
         LinkedList<String> members = loadClusterMembers(node_key);
+        System.out.println("MEMBERS SIZE: " + members.size());
         if(members.size() == 0){
             return null;
         }
@@ -79,18 +80,18 @@ public final class MembershipUtils {
         }
         Collections.sort(hashed_members_list);
         boolean flag = false;
-        String respondible_node_id = null;
+        String responsible_node_id = null;
         for(String hm : hashed_members_list) {
             if(flag){
-                respondible_node_id =  hashed_members.get(hm);
+                responsible_node_id =  hashed_members.get(hm);
                 break;
             }
             if(hm.equals(node_key)){
                 flag = true;
             }
         }
-        if(respondible_node_id == null) respondible_node_id = hashed_members.get(hashed_members_list.get(0));
-        return respondible_node_id;
+        if(responsible_node_id == null) responsible_node_id = hashed_members.get(hashed_members_list.get(0));
+        return responsible_node_id;
     }
 
     /*
@@ -374,6 +375,9 @@ public final class MembershipUtils {
 
     public static String getRawClusterMembers(String node_key){
         String raw_cluster_members = FileHandler.readFile("../global/"+node_key+"/membership/", "cluster_members.txt");
+        while(raw_cluster_members.length() == 0){
+            raw_cluster_members = FileHandler.readFile("../global/"+node_key+"/membership/", "cluster_members.txt");
+        }
         return raw_cluster_members;
     }
 
@@ -460,12 +464,6 @@ public final class MembershipUtils {
                 key_values = key_values.concat(file+"+"+value);
                 key_values = key_values.concat("-");
                 FileHandler.deleteUnity("../global/"+node_key+"/storage/", file);
-            }
-            else if (node_key.compareTo(file)<0){
-              String value = FileHandler.readFile("../global/"+node_key+"/storage/", file);
-              key_values = key_values.concat(file+"+"+value);
-              key_values = key_values.concat("-");
-              FileHandler.deleteUnity("../global/"+node_key+"/storage/", file);
             }
         }
         if(key_values.length() > 0) key_values = key_values.substring(0, key_values.length()-1);

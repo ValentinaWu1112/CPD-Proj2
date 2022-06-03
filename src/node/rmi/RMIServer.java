@@ -89,26 +89,59 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
 
         public void run(){
             try {
+                System.out.println("RECEIVED JOINREQ from: " + target_node_id);
                 Random rand = new Random();
                 TimeUnit.SECONDS.sleep(rand.nextInt(3));
-                MembershipUtils.updateLog(tcp_ip, target_node_id.concat("-").concat(counter).concat(";"));
-                MembershipUtils.updateCluster(tcp_ip, target_node_id);
-                String message = MembershipUtils.createStoreKeyValueMessage(tcp_ip, target_node_id, 0, "", 0);
-                if(message.length()>0){
-                    NodeTCPClient ntcpc = new NodeTCPClient(this.target_node_id, Integer.toString(tcp_port));
-                    ntcpc.start();
-                    try{
-                        ntcpc.sendTCPMessage(MembershipUtils.createMembershipInfoMessage(tcp_ip, "TCP"));
-                        String responsible_node = MembershipUtils.getSuccessorNode(target_node_id);
-                        if(responsible_node != null && responsible_node.equals(tcp_ip)){
-                            ntcpc.sendTCPMessage(MembershipUtils.createStoreKeyValueMessage(tcp_ip, target_node_id, 0, "", 0));
+                String successor_node = MembershipUtils.getSuccessorNode(target_node_id);
+                System.err.println("im: " + tcp_ip + " successor is: "+ successor_node);
+                String resp_node_ancestor = MembershipUtils.getAncestorNode(tcp_ip);
+                String resp_node_successor = MembershipUtils.getSuccessorNode(tcp_ip);
+                if(successor_node != null && successor_node.equals(tcp_ip)){
+                    System.out.println("IM RESPONSIBLE!");
+                    if(resp_node_ancestor != null){
+                        NodeTCPClient ntcpc_resp_node_ancestor = new NodeTCPClient(resp_node_ancestor, Integer.toString(tcp_port));
+                        ntcpc_resp_node_ancestor.start();
+                        try{
+                            System.out.println("DELETING REPLICAS ON ANCESTOR");
+                            ntcpc_resp_node_ancestor.sendTCPMessage(MembershipUtils.createDeleteKeyValueMessage(tcp_ip, MembershipUtils.getKeyValueOrigin(tcp_ip)));
+                        } finally {
+                            ntcpc_resp_node_ancestor.closeTCPConnection();
+                            ntcpc_resp_node_ancestor = null;
                         }
-                    } finally{
-                        ntcpc.closeTCPConnection();
-                        ntcpc = null;
+                    }
+                    if(resp_node_successor != null && resp_node_successor != null && !resp_node_successor.equals(resp_node_ancestor)){
+                        NodeTCPClient ntcpc_resp_node_successor = new NodeTCPClient(resp_node_successor, Integer.toString(tcp_port));
+                        ntcpc_resp_node_successor.start();
+                        try{
+                            System.out.println("DELETING REPLICAS ON SUCCESSOR");
+                            ntcpc_resp_node_successor.sendTCPMessage(MembershipUtils.createDeleteKeyValueMessage(tcp_ip, MembershipUtils.getKeyValueOrigin(tcp_ip)));
+                        } finally {
+                            ntcpc_resp_node_successor.closeTCPConnection();
+                            ntcpc_resp_node_successor = null;
+                        }
                     }
                 }
+                MembershipUtils.updateLog(tcp_ip, target_node_id.concat("-").concat(counter).concat(";"));
+                MembershipUtils.updateCluster(tcp_ip, target_node_id);
 
+                NodeTCPClient ntcpc = new NodeTCPClient(this.target_node_id, Integer.toString(tcp_port));
+                ntcpc.start();
+                try{
+                    ntcpc.sendTCPMessage(MembershipUtils.createMembershipInfoMessage(tcp_ip, "TCP"));
+                    if(successor_node != null && successor_node.equals(tcp_ip)){
+                        ntcpc.sendTCPMessage(MembershipUtils.createStoreKeyValueMessage(tcp_ip, target_node_id, 0, "", 0));
+                    }
+                } finally{
+                    ntcpc.closeTCPConnection();
+                    ntcpc = null;
+                }
+
+                if(resp_node_ancestor != null){
+                    executor.execute(new TaskPropagateReplicas(resp_node_ancestor, MembershipUtils.getKeyValueOrigin(tcp_ip)));
+                }
+                if(resp_node_successor != null && resp_node_ancestor != null && !resp_node_ancestor.equals(resp_node_successor)){
+                    executor.execute(new TaskPropagateReplicas(resp_node_successor, MembershipUtils.getKeyValueOrigin(tcp_ip)));
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -272,8 +305,10 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
                 if(replicas_flag){
                     String successor = MembershipUtils.getSuccessorNode(tcp_ip);
                     String ancestor = MembershipUtils.getAncestorNode(tcp_ip);
-                    executor.execute(new TaskPropagateReplicas(successor, store));
-                    if(!successor.equals(ancestor)){
+                    if(successor != null){
+                        executor.execute(new TaskPropagateReplicas(successor, store));
+                    }
+                    if(ancestor != null && successor != null && !successor.equals(ancestor)){
                         executor.execute(new TaskPropagateReplicas(ancestor, store));
                     }
                 }
@@ -289,42 +324,46 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
                     //System.out.println("sucessor:" + successor + " anscentor:" + ancestor);
                     String message = MembershipUtils.getKeyValueOrigin(tcp_ip);
                     if(message.length()>0){
-                      System.out.println("Processing replicas");
-                      executor.execute(new TaskPropagateReplicas(successor, message));
-                      if(!successor.equals(ancestor)){
-                          executor.execute(new TaskPropagateReplicas(ancestor, message));
-                      }
+                        System.out.println("Processing replicas");
+                        if(successor != null){
+                            executor.execute(new TaskPropagateReplicas(successor, message));
+                        }
+                        if(ancestor != null && successor != null && !successor.equals(ancestor)){
+                            executor.execute(new TaskPropagateReplicas(ancestor, message));
+                        }
                     }
                 }
                 else if (join_flag){
-                  try {
-                      Thread.sleep(300);
-                  } catch (InterruptedException e) {
-                      // TODO Auto-generated catch block
-                      e.printStackTrace();
-                  }
-                  String sucessor_sucessor = MembershipUtils.getSuccessorNode(MembershipUtils.getSuccessorNode(tcp_ip));
-                  String message = MembershipUtils.getKeyValueOrigin(tcp_ip);
-                  if(!sucessor_sucessor.equals(tcp_ip)){
-                    NodeTCPClient ntcpc = new NodeTCPClient(sucessor_sucessor, Integer.toString(tcp_port));
-                    ntcpc.start();
-                    try{
-                        ntcpc.sendTCPMessage(MembershipUtils.createDeleteKeyValueMessage(tcp_ip, message));
+                    try {
+                        Thread.sleep(300);
+                    } catch (InterruptedException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
                     }
-                    finally{
-                        ntcpc.closeTCPConnection();
-                        ntcpc = null;
+                    String sucessor_sucessor = MembershipUtils.getSuccessorNode(MembershipUtils.getSuccessorNode(tcp_ip));
+                    String message = MembershipUtils.getKeyValueOrigin(tcp_ip);
+                    if(sucessor_sucessor != null && !sucessor_sucessor.equals(tcp_ip)){
+                        NodeTCPClient ntcpc = new NodeTCPClient(sucessor_sucessor, Integer.toString(tcp_port));
+                        ntcpc.start();
+                        try{
+                            ntcpc.sendTCPMessage(MembershipUtils.createDeleteKeyValueMessage(tcp_ip, message));
+                        }
+                        finally{
+                            ntcpc.closeTCPConnection();
+                            ntcpc = null;
+                        }
                     }
-                  }
-                  String successor = MembershipUtils.getSuccessorNode(tcp_ip);
-                  String ancestor = MembershipUtils.getAncestorNode(tcp_ip);
-                  if(message.length()>0){
-                    System.out.println("Processing replicas");
-                    executor.execute(new TaskPropagateReplicas(successor, message));
-                    if(!successor.equals(ancestor)){
-                        executor.execute(new TaskPropagateReplicas(ancestor, message));
+                    String successor = MembershipUtils.getSuccessorNode(tcp_ip);
+                    String ancestor = MembershipUtils.getAncestorNode(tcp_ip);
+                    if(message != null && message.length()>0){
+                        System.out.println("Processing replicas");
+                        if(successor != null){
+                            executor.execute(new TaskPropagateReplicas(successor, message));
+                        }
+                        if(ancestor != null && successor != null && !successor.equals(ancestor)){
+                            executor.execute(new TaskPropagateReplicas(ancestor, message));
+                        }
                     }
-                  }
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -551,22 +590,28 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
             if(body_content[0].equals("joinReq")){
                 if(last_joining_nodeid == null || !last_joining_nodeid.equals(message_header[1])){
                     last_joining_nodeid = message_header[1];
+                    if(body_content.length < 2) return;
                     executor.execute(new TaskJoinReq(message_header[1], body_content[1]));
                 }
             }
             else if(body_content[0].equals("leaveReq")){
+                if(body_content.length < 2) return;
                 executor.execute(new TaskLeaveReq(message_header[1], body_content[1]));
             }
             else if(body_content[0].equals("memshipInfoUDP")){
+                if(body_content.length < 2) return;
                 executor.execute(new TaskMemshipInfo(body_content[1], body_content[2]));
             }
             else if(body_content[0].equals("memshipInfoTCP") && received_memshipinfo_messages_counter < 3){
+                if(body_content.length < 2) return;
                 executor.execute(new TaskMemshipInfo(body_content[1], body_content[2]));
             }
             else if(body_content[0].equals("deleteKey")){
+                if(body_content.length < 2) return;
                 executor.execute(new TaskReceiveDeleteKey(body_content[1],false));
             }
             else if(body_content[0].equals("getValue")){
+                if(body_content.length < 2) return;
                 executor.execute(new TaskReceiveGetValue(message_header[1],body_content[1]));
             }
             else if(body_content[0].equals("getReturn")){

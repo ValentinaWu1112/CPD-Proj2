@@ -6,6 +6,13 @@ import crypto.Crypto;
 public final class MembershipUtils {
     private MembershipUtils(){}
 
+    public static String getNodeUpdate(String node_id){
+      String node_key = Crypto.encodeValue(node_id);
+      String cluster_members= getRawClusterMembers(node_key);
+      String[] members = cluster_members.split("-");
+      return members[0];
+    }
+
     public static boolean updateStorage(String node_id, String store){
         String node_key = Crypto.encodeValue(node_id);
         LinkedList<String> files = FileHandler.getDirectoryFiles("../global/"+ node_key + "/", "storage");

@@ -841,6 +841,25 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
         }
     }
 
+    class TaskSendUpdateInfo extends Thread{
+      TaskSendUpdateInfo(){}
+
+      public void run(){
+          try{
+            while (true){
+              TimeUnit.SECONDS.sleep(1);
+              System.out.println("Update Membership 1 sec");
+              String nodeUpdate = MembershipUtils.getNodeUpdate(tcp_ip);
+              if(nodeUpdate.equals(tcp_ip)){
+                nmc.sendMulticastMessage(MembershipUtils.createMembershipInfoMessage(tcp_ip, "TCP"));
+              }
+            }
+          }catch (Exception e) {
+              e.printStackTrace();
+          }
+      }
+    }
+
     public void run() {
         System.out.println("RMIServerBrain");
         /*
@@ -853,5 +872,7 @@ class RMIServerBrain extends Thread implements RMIServerAPI{
         nms.start();
         scout = new MessageScout(this.tcp_ip);
         scout.start();
+        TaskSendUpdateInfo sui = new TaskSendUpdateInfo();
+        sui.start();
     }
 }

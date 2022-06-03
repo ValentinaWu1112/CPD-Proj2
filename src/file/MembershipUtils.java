@@ -10,7 +10,7 @@ public final class MembershipUtils {
       String node_key = Crypto.encodeValue(node_id);
       String cluster_members= getRawClusterMembers(node_key);
       String[] members = cluster_members.split("-");
-      return members[0];
+      return members[members.length - 1];
     }
 
     public static boolean updateStorage(String node_id, String store){
